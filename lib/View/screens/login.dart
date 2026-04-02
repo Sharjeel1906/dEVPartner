@@ -21,28 +21,35 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: C.bg,
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: C.green, // <-- This sets the drawer/hamburger icon color
+        ),
+        backgroundColor: C.bg,
+        elevation: 0,
+        title:ShaderMask(
+          shaderCallback: (bounds) =>
+              LinearGradient(colors: [C.green, C.cyan]).createShader(
+                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+              ),
+          child: Text(
+            "dEVPartner",
+            style: GoogleFonts.dmSans(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: width * 0.06,
+            ),
+          ),
+        ),
+      ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ShaderMask(
-                shaderCallback: (bounds) => LinearGradient(
-                  colors: [C.green, C.cyan],
-                ).createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ),
-                child: Text(
-                  "dEVPartner",
-                  style: GoogleFonts.dmSans(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: width * 0.06,
-                  ),
-                ),
-              ),
-              SizedBox(height: height * 0.08),
+              SizedBox(height: height * 0.06),
               Center(
                 child: Text(
                   "Login",

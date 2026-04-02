@@ -73,7 +73,7 @@ Widget bottomNavigationBarUI({
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         navItem(Icons.explore, "Discover", 0),
-        navItem(Icons.people, "My Team", 1),
+        navItem(Icons.people, "Teams", 1),
         navItem(Icons.chat_bubble_outline, "Messages", 3),
         navItem(Icons.settings, "Setting", 2),
       ],

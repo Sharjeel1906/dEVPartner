@@ -65,41 +65,36 @@ class CreateProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: C.bg,
+      appBar: AppBar(
+        backgroundColor: C.bg,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: C.green, // sets color for built-in back button or drawer icon
+        ),
+        title: ShaderMask(
+          shaderCallback: (bounds) =>
+              LinearGradient(colors: [C.green, C.cyan]).createShader(
+                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+              ),
+          child: Text(
+            "dEVPartner",
+            style: GoogleFonts.dmSans(
+              color: Colors.white, // gradient overrides this
+              fontWeight: FontWeight.bold,
+              fontSize: width * 0.06,
+            ),
+          ),
+        ),
+        automaticallyImplyLeading: true,
+      ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: C.green,
-                      size: width * 0.06,
-                    ),
-                  ),
-                  SizedBox(width: width * 0.02),
-                  ShaderMask(
-                    shaderCallback: (bounds) =>
-                        LinearGradient(colors: [C.green, C.cyan]).createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ),
-                    child: Text(
-                      "dEVPartner",
-                      style: GoogleFonts.dmSans(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: width * 0.06,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: height * 0.04),
+              SizedBox(height: height * 0.02),
 
               // Step Capsules
               SingleChildScrollView(

@@ -5,6 +5,30 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
 import '../models/profile.dart';
 
+Widget drawerItem(IconData icon, String title, VoidCallback onTap) {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(14),
+      color: C.surface.withOpacity(0.05), // subtle item background
+    ),
+    child: ListTile(
+      leading: Icon(icon, color: C.green),
+      title: Text(
+        title,
+        style: GoogleFonts.spaceMono(
+          color: C.cyan,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+        ),
+      ),
+      hoverColor: C.green.withOpacity(0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+      onTap: onTap,
+    ),
+  );
+}
 Widget profileCard(BuildContext context, Profile profile) {
   // MediaQuery values
   final screenWidth = MediaQuery.of(context).size.width;

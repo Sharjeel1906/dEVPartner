@@ -3,6 +3,7 @@ import 'package:dev_partner/View/models/profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/register.dart';
+import 'package:dev_partner/View/screens/user_profile.dart';
 import 'package:dev_partner/View/widgets/bottom_nav_bar.dart';
 import 'package:dev_partner/View/widgets/bt_ui_helper.dart';
 import 'package:flutter/material.dart';
@@ -102,42 +103,109 @@ class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
 
     return Scaffold(
       backgroundColor: C.bg,
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: C.green, // <-- This sets the drawer/hamburger icon color
+        ),
+        backgroundColor: C.bg,
+        elevation: 0,
+        title:ShaderMask(
+          shaderCallback: (bounds) =>
+              LinearGradient(colors: [C.green, C.cyan]).createShader(
+                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+              ),
+          child: Text(
+            "Discover Partner",
+            style: GoogleFonts.dmSans(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: width * 0.06,
+            ),
+          ),
+        ),
+      ),
+      drawer: Drawer(
+          width: (width * 0.65).clamp(260.0, 320.0), // professional width
+          child: Container(
+            color: C.bg, // fully matches your theme
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Drawer Header
+                DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: C.surface.withOpacity(0.15), // subtle header background
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(colors: [C.green, C.cyan]),
+                        ),
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: C.bg,
+                          child: Icon(
+                            Icons.account_circle_rounded,
+                            color: C.green,
+                            size: 32,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          "Ahmed", // dummy username
+                          style: GoogleFonts.spaceMono(
+                            color: C.green,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Drawer Items
+                drawerItem(Icons.login, "Login", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));
+                }),
+                drawerItem(Icons.app_registration, "Register", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
+                }),
+                drawerItem(Icons.person, "Create Profile", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
+                }),
+                drawerItem(Icons.chat, "Chats", () {}),
+                drawerItem(Icons.people, "My Team", () {}),
+                drawerItem(Icons.logout_outlined, "Logout", () {}),
+                spacer(),
+
+                // Help & Policy
+                drawerItem(Icons.help_outline, "Help & Support", () {}),
+                drawerItem(Icons.warning_amber_rounded, "Disclaimer", () {}),
+                drawerItem(Icons.privacy_tip_outlined, "Privacy Policy", () {}),
+              ],
+            ),
+          ),
+        ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => {},
-                    child: Icon(
-                      Icons.menu,
-                      color: C.green,
-                      size: width * 0.08,
-                    ),
-                  ),
-                  SizedBox(width: width * 0.02),
-                  ShaderMask(
-                    shaderCallback: (bounds) =>
-                        LinearGradient(colors: [C.green, C.cyan]).createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ),
-                    child: Text(
-                      "Discover Partner",
-                      style: GoogleFonts.dmSans(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: width * 0.06,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: height*0.04,),
+              SizedBox(height: height*0.01,),
               TextField(
                 controller: searchController,
                 focusNode: FocusNode(),
