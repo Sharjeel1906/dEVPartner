@@ -165,7 +165,6 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 12),
 
                 // Drawer Items

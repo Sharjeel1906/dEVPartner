@@ -52,7 +52,6 @@ class RegisterScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: height * 0.06),
-
               Center(
                 child: Text(
                   "Register",
