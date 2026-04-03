@@ -200,10 +200,10 @@ class CreateProfileScreen extends StatelessWidget {
 
                     // Dropdowns: Semester & Class
                     buildLabeledDropdownRow(
-                      label1: "Semester",
+                      label1: "SEMESTER",
                       notifier1: selectedSemester,
                       options1: semesterOptions,
-                      label2: "Class",
+                      label2: "CLASS",
                       notifier2: selectedClass,
                       options2: classOptions,
                       spacing: width * 0.03,
@@ -212,10 +212,10 @@ class CreateProfileScreen extends StatelessWidget {
 
                     // Dropdowns: Program & Section
                     buildLabeledDropdownRow(
-                      label1: "Program",
+                      label1: "PROGRAM",
                       notifier1: selectedProgram,
                       options1: programOptions,
-                      label2: "Section",
+                      label2: "SECTION",
                       notifier2: selectedSection,
                       options2: sectionOptions,
                       spacing: width * 0.03,
@@ -390,11 +390,11 @@ class CreateProfileScreen extends StatelessWidget {
                       Focusnode: FocusNode(),
                       controller: domainController,
                       hintText: "e.g FrontEnd Dev",
-                      labelText: "Domain",
+                      labelText: "DOMAIN",
                     ),
                     SizedBox(height: height * 0.01),
                     Text(
-                      "Experience",
+                      "EXPERIENCE",
                       style: TextStyle(
                         fontSize: width * 0.033,
                         color: C.textLabel,
@@ -433,7 +433,7 @@ class CreateProfileScreen extends StatelessWidget {
                     SizedBox(height: height * 0.03),
 
                     Text(
-                      "CV/Resume",
+                      "CV/RESUME",
                       style: GoogleFonts.spaceMono(
                         fontSize: width * 0.035,
                         color: C.textLabel,

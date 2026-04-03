@@ -21,7 +21,7 @@ Widget customTextField({
           fontSize: 13,
         ),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: 5),
       ValueListenableBuilder<bool>(
         valueListenable: obscurePassword,
         builder: (context, value, child) {

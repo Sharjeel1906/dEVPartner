@@ -2,6 +2,7 @@ import 'package:dev_partner/View/models/profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/View/screens/login.dart';
+import 'package:dev_partner/View/screens/my_team_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
 import 'package:flutter/material.dart';
@@ -177,8 +178,9 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                 drawerItem(Icons.person, "Create Profile", () {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateProfileScreen()));
                 }),
-                drawerItem(Icons.chat, "Chats", () {}),
-                drawerItem(Icons.people, "My Team", () {}),
+                drawerItem(Icons.people, "My Team", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>MyTeamScreen()));
+                }),
                 drawerItem(Icons.logout_outlined, "Logout", () {}),
                 spacer(),
 
