@@ -485,7 +485,7 @@ class CreateProfileScreen extends StatelessWidget {
                         onPressed: () {},
                         child: Text(
                           "Save Profile",
-                          style: TextStyle(
+                          style: GoogleFonts.spaceMono(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: height * 0.017,

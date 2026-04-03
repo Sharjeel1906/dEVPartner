@@ -1,5 +1,6 @@
 import 'package:dev_partner/View/models/profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
+import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
@@ -170,8 +171,8 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                 drawerItem(Icons.login, "Login", () {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));
                 }),
-                drawerItem(Icons.app_registration, "Register", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
+                drawerItem(Icons.app_registration, "Create Team", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateTeamScreen()));
                 }),
                 drawerItem(Icons.person, "Create Profile", () {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateProfileScreen()));

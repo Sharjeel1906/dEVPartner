@@ -3,9 +3,9 @@ import 'package:dev_partner/View/screens/browse_teams.dart';
 import 'package:dev_partner/View/widgets/theme.dart';
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
-import 'package:dev_partner/View/screens/create_profile.dart';
-import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/register.dart';
+import 'package:dev_partner/View/screens/inbox_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -20,8 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> screens = [
     BrowseProfileScreen(),
     BrowseTeamsScreen(),
-    LoginScreen(),
     RegisterScreen(),
+    InboxScreen(),
   ];
 
   @override

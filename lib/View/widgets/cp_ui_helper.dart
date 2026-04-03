@@ -130,7 +130,7 @@ Widget buildDropdown(ValueNotifier<String> notifier, List<String> options) {
             value: value,
             isExpanded: true,
             dropdownColor: C.bg, // dropdown background
-            icon: Icon(Icons.arrow_drop_down, color: C.textPrimary),
+            icon: Icon(Icons.arrow_drop_down, color: C.textPrimary.withOpacity(0.8)),
             style: TextStyle(
               color: C.textPrimary,
               fontSize: 14,
@@ -146,7 +146,7 @@ Widget buildDropdown(ValueNotifier<String> notifier, List<String> options) {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text(option, style: GoogleFonts.spaceMono(color: C.textPrimary),maxLines: 1,overflow: TextOverflow.visible,)
+                      child: Text(option, style: TextStyle(color: C.textPrimary.withOpacity(0.8)),maxLines: 1,overflow: TextOverflow.visible,)
                   ),
                 ),
               );
