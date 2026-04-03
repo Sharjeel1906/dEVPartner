@@ -1,4 +1,4 @@
-import 'package:dev_partner/View/screens/browse_team.dart';
+import 'package:dev_partner/View/screens/browse_profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:flutter/material.dart';

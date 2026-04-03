@@ -1,4 +1,5 @@
-import 'package:dev_partner/View/screens/browse_team.dart';
+import 'package:dev_partner/View/screens/browse_profile.dart';
+import 'package:dev_partner/View/screens/browse_teams.dart';
 import 'package:dev_partner/View/widgets/theme.dart';
 import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -17,8 +18,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // List of screens
   final List<Widget> screens = [
-    BrowseTeamScreen(),
-    CreateProfileScreen(),
+    BrowseProfileScreen(),
+    BrowseTeamsScreen(),
     LoginScreen(),
     RegisterScreen(),
   ];

@@ -1,226 +1,252 @@
-import 'package:dev_partner/View/screens/create_profile.dart';
-import 'package:dev_partner/View/screens/user_profile.dart';
+import 'package:dev_partner/View/models/project.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
-import '../models/profile.dart';
 
-Widget drawerItem(IconData icon, String title, VoidCallback onTap) {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(14),
-      color: C.surface.withOpacity(0.05), // subtle item background
-    ),
-    child: ListTile(
-      leading: Icon(icon, color: C.green),
-      title: Text(
-        title,
-        style: GoogleFonts.spaceMono(
-          color: C.cyan,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
+Widget customizedColumn({
+  required BuildContext context,
+  required IconData icon,
+  required String title,
+  required String value,
+}) {
+  final w = MediaQuery.of(context).size.width;
+  final h = MediaQuery.of(context).size.height;
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center, // 🔥 center looks better
+    children: [
+
+      SizedBox(height: h * 0.006),
+
+      /// Value
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          value,
+          maxLines: 1,
+          style: GoogleFonts.dmSans(
+            color: C.cyan,
+            fontSize: w * 0.055,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-      hoverColor: C.green.withOpacity(0.15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-      onTap: onTap,
-    ),
+
+      SizedBox(height: h * 0.004),
+
+      /// Title
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          title,
+          maxLines: 1,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.dmSans(
+            color: C.textLabel,
+            fontSize: w * 0.032,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ],
   );
 }
-Widget profileCard(BuildContext context, Profile profile) {
-  // MediaQuery values
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
+Widget statDivider(BuildContext context) {
+  final h = MediaQuery.of(context).size.height;
 
   return Container(
-    margin: EdgeInsets.symmetric(vertical: screenHeight * 0.012),
-    padding: EdgeInsets.all(screenWidth * 0.04),
+    height: h * 0.05,
+    width: 1,
+    margin: const EdgeInsets.symmetric(horizontal: 8),
+    color: C.border.withOpacity(0.6),
+  );
+}
+
+
+Widget projectCard({required BuildContext context, required Project project, required Color accentColor}) {
+  final width = MediaQuery.of(context).size.width;
+  final height = MediaQuery.of(context).size.height;
+
+  return Container(
+    margin: EdgeInsets.only(bottom: height * 0.02),
+    padding: EdgeInsets.all(width * 0.04),
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(screenWidth * 0.05),
-      border: Border.all(color: Colors.white.withOpacity(0.1)),
-      boxShadow: [
-        BoxShadow(
-          color: C.surface,
-          blurRadius: screenWidth * 0.05,
-          spreadRadius: screenWidth * 0.002,
-        )
-      ],
+      color: C.surface,
+      borderRadius: BorderRadius.circular(width * 0.04),
+      border: Border.all(color: C.border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
-        /// 🔹 Top Row (Image + Info)
         Row(
           children: [
-            Stack(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(screenWidth * 0.008),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Colors.greenAccent, Colors.cyanAccent],
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: screenWidth * 0.07,
-                    backgroundImage: NetworkImage(profile.imageUrl),
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(width: screenWidth * 0.03),
-
-            /// Name + Role
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    profile.name,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.005),
-                  Text(
-                    "${profile.role} / ${profile.semester}",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: screenWidth * 0.03,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            /// Domain Tag
             Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.025, vertical: screenHeight * 0.005),
+              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.005),
               decoration: BoxDecoration(
-                color: Colors.greenAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                color: accentColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(width * 0.05),
               ),
               child: Text(
-                profile.domain.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.greenAccent,
-                  fontSize: screenWidth * 0.025,
-                  fontWeight: FontWeight.bold,
+                project.category,
+                style: GoogleFonts.spaceMono(
+                  color: C.textLabel,
+                  fontSize: width * 0.028,
+                  letterSpacing: 1,
                 ),
               ),
-            )
+            ),
+            SizedBox(width: width * 0.02),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.005),
+              decoration: BoxDecoration(
+                color: C.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(width * 0.05),
+              ),
+              child: Text(
+                "Recruiting",
+                style: GoogleFonts.spaceMono(
+                  color: C.green,
+                  fontSize: width * 0.028,
+                ),
+              ),
+            ),
           ],
         ),
 
-        SizedBox(height: screenHeight * 0.015),
+        SizedBox(height: height * 0.015),
 
-        /// 🔹 Skills Label
+        /// Title
         Text(
-          "Skills Section",
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
-            fontSize: screenWidth * 0.03,
+          project.title,
+          style: GoogleFonts.spaceMono(
+            color: C.textPrimary,
+            fontSize: width * 0.045,
+            fontWeight: FontWeight.bold,
           ),
         ),
 
-        SizedBox(height: screenHeight * 0.01),
+        SizedBox(height: height * 0.01),
 
-        /// 🔹 Skills Chips
+        /// Description
+        Text(
+          project.description,
+          style: TextStyle(
+            color: C.textMuted,
+            fontSize: width * 0.032,
+          ),
+        ),
+
+        SizedBox(height: height * 0.015),
+        Text(
+          "Skills needed",
+          style: GoogleFonts.spaceMono(
+            color: C.textMuted,
+            fontSize: width * 0.033,
+          ),
+        ),
+        SizedBox(height: height * 0.012),
+
+        /// Skills
         Wrap(
-          spacing: screenWidth * 0.02,
-          children: profile.skills.map((skill) {
+          spacing: width * 0.02,
+          runSpacing: height * 0.008,
+          children: project.skills.map((skill) {
             return Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.03, vertical: screenHeight * 0.008),
+              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.008),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(screenWidth * 0.025),
-                border: Border.all(color: Colors.white12),
+                color: accentColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(width * 0.025),
               ),
               child: Text(
                 skill,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: screenWidth * 0.03,
+                style: GoogleFonts.spaceMono(
+                  color: C.textPrimary,
+                  fontSize: width * 0.03,
                 ),
               ),
             );
           }).toList(),
         ),
 
-        SizedBox(height: screenHeight * 0.018),
+        SizedBox(height: height * 0.012),
+        Text(
+          "Open Roles",
+          style: GoogleFonts.spaceMono(
+            color: C.textMuted,
+            fontSize: width * 0.033,
+          ),
+        ),
+        SizedBox(height: height * 0.015),
 
-        /// 🔹 Buttons
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: screenHeight * 0.015),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(screenWidth * 0.035),
-                  gradient: LinearGradient(
-                    colors: [Colors.greenAccent, Colors.cyanAccent],
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
-                  },
-                  child: Text(
-                    "View Profile",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: screenWidth * 0.035,
-                    ),
-                  ),
+        /// Open Positions (reused skills for now)
+        Wrap(
+          spacing: width * 0.02,
+          runSpacing: height * 0.008,
+          children: project.skills.map((skill) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.008),
+              decoration: BoxDecoration(
+                color: C.surface,
+                borderRadius: BorderRadius.circular(width * 0.025),
+              ),
+              child: Text(
+                skill,
+                style: GoogleFonts.spaceMono(
+                  color: C.textPrimary,
+                  fontSize: width * 0.03,
                 ),
               ),
+            );
+          }).toList(),
+        ),
+
+        SizedBox(height: height * 0.015),
+
+        /// Bottom Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "${project.spotsLeft} spots left",
+              style: GoogleFonts.spaceMono(
+                color: C.textMuted,
+                fontSize: width * 0.03,
+              ),
             ),
-
-            SizedBox(width: screenWidth * 0.025),
-
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: screenHeight * 0.015),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(screenWidth * 0.035),
-                  border: Border.all(color: Colors.greenAccent),
-                ),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.chat_bubble_outline,
-                        color: Colors.greenAccent, size: screenWidth * 0.04),
-                    SizedBox(width: screenWidth * 0.015),
-                    GestureDetector(
-                      onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
-                      },
-                      child: Text(
-                        "Message",
-                        style: TextStyle(
-                          color: Colors.greenAccent,
-                          fontSize: screenWidth * 0.035,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            Text(
+              project.timeAgo,
+              style: GoogleFonts.spaceMono(
+                color: C.textMuted,
+                fontSize: width * 0.03,
               ),
             ),
           ],
-        )
+        ),
+
+        SizedBox(height: height * 0.015),
+
+        /// Button
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: height * 0.015),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [accentColor, accentColor.withOpacity(0.7)],
+            ),
+            borderRadius: BorderRadius.circular(width * 0.03),
+          ),
+          child: Center(
+            child: Text(
+              "Request to Join FYP →",
+              style: GoogleFonts.spaceMono(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: width * 0.035,
+              ),
+            ),
+          ),
+        ),
       ],
     ),
   );

@@ -143,7 +143,11 @@ Widget buildDropdown(ValueNotifier<String> notifier, List<String> options) {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(option, style: TextStyle(color: C.textPrimary)),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(option, style: GoogleFonts.spaceMono(color: C.textPrimary),maxLines: 1,overflow: TextOverflow.visible,)
+                  ),
                 ),
               );
             }).toList(),
@@ -193,32 +197,28 @@ Widget buildLabeledDropdownRow({
     ],
   );
 }
-Widget buildLabeledDropdownRow3({
-  required String label1,
+Widget buildDropdownRow3({
   required ValueNotifier<String> notifier1,
   required List<String> options1,
 
-  required String label2,
   required ValueNotifier<String> notifier2,
   required List<String> options2,
 
-  required String label3,
   required ValueNotifier<String> notifier3,
   required List<String> options3,
 
   required double spacing,
 }) {
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: [
-        _dropdownItem(label1, notifier1, options1),
-        SizedBox(width: spacing),
-        _dropdownItem(label2, notifier2, options2),
-        SizedBox(width: spacing),
-        _dropdownItem(label3, notifier3, options3),
-      ],
-    ),
+  return Row(
+    children: [
+      Expanded(child: buildDropdown(notifier1, options1)),
+      SizedBox(width: spacing),
+
+      Expanded(child: buildDropdown(notifier2, options2)),
+      SizedBox(width: spacing),
+
+      Expanded(child: buildDropdown(notifier3, options3)),
+    ],
   );
 }
 Widget sectionHeading({
@@ -256,23 +256,6 @@ Widget spacer(){
       gradient: LinearGradient(
         colors: [Colors.transparent, C.green, Colors.transparent],
       ),
-    ),
-  );
-}
-Widget _dropdownItem(
-    String label,
-    ValueNotifier<String> notifier,
-    List<String> options,
-    ) {
-  return SizedBox(
-    width: 150, // 🔥 controls overflow
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: C.textLabel)),
-        SizedBox(height: 6),
-        buildDropdown(notifier, options),
-      ],
     ),
   );
 }

@@ -1,29 +1,25 @@
-import 'dart:io';
 import 'package:dev_partner/View/models/profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/register.dart';
-import 'package:dev_partner/View/screens/user_profile.dart';
-import 'package:dev_partner/View/widgets/bottom_nav_bar.dart';
-import 'package:dev_partner/View/widgets/bt_ui_helper.dart';
+import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
 
-class BrowseTeamScreen extends StatefulWidget {
-  const BrowseTeamScreen({super.key});
+class  BrowseProfileScreen extends StatefulWidget {
+  const BrowseProfileScreen({super.key});
 
   @override
-  State<BrowseTeamScreen> createState() => _BrowseTeamScreenState();
+  State<BrowseProfileScreen> createState() => _BrowseProfileScreenState();
 }
 
-class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
+class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
   final TextEditingController searchController = TextEditingController();
 
   final List<String> semesterOptions = [
-    "Select",
+    "Semester",
     "Semester 1",
     "Semester 2",
     "Semester 3",
@@ -33,8 +29,8 @@ class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
     "Semester 7",
     "Semester 8",
   ];
-  final List<String> classOptions = ["Select", "BSCS", "BSSE", "BSAI"];
-  final List<String> programOptions = ["Select", "Evening", "Morning"];
+  final List<String> classOptions = ["Class", "BSCS", "BSSE", "BSAI"];
+  final List<String> programOptions = ["Program", "Evening", "Morning"];
   List<Profile> profiles = [
     Profile(
       name: "Alisha M.",
@@ -85,16 +81,10 @@ class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
       skills: ["Networking", "Ethical Hacking", "Linux"],
     ),
   ];
-  final List<Widget> screens = [
-    BrowseTeamScreen(),
-    CreateProfileScreen(),
-    LoginScreen(),
-    RegisterScreen(),
-  ];
 
-  final ValueNotifier<String> selectedSemester = ValueNotifier("Select");
-  final ValueNotifier<String> selectedClass = ValueNotifier("Select");
-  final ValueNotifier<String> selectedProgram = ValueNotifier("Select");
+  final ValueNotifier<String> selectedSemester = ValueNotifier("Semester");
+  final ValueNotifier<String> selectedClass = ValueNotifier("Class");
+  final ValueNotifier<String> selectedProgram = ValueNotifier("Program");
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +174,7 @@ class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
                 }),
                 drawerItem(Icons.person, "Create Profile", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateProfileScreen()));
                 }),
                 drawerItem(Icons.chat, "Chats", () {}),
                 drawerItem(Icons.people, "My Team", () {}),
@@ -228,25 +218,14 @@ class _BrowseTeamScreenState extends State<BrowseTeamScreen> {
                 ),
               ),
               SizedBox(height: height*0.02,),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: C.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: C.border),
-                ),
-                child: buildLabeledDropdownRow3(
-                    label1: "Class",
-                    notifier1:selectedClass,
-                    options1: classOptions,
-                    label2: "Program",
-                    notifier2: selectedProgram,
-                    options2: programOptions,
-                    label3: "Semester",
-                    notifier3: selectedSemester,
-                    options3: semesterOptions,
-                    spacing: width*0.02
-                ),
+              buildDropdownRow3(
+                  notifier1:selectedClass,
+                  options1: classOptions,
+                  notifier2: selectedProgram,
+                  options2: programOptions,
+                  notifier3: selectedSemester,
+                  options3: semesterOptions,
+                  spacing: width*0.02
               ),
               SizedBox(height: height*0.02,),
               ListView.builder(
