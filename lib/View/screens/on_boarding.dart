@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:dev_partner/View/screens/home_screen.dart';
+import 'package:dev_partner/View/screens/register.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -151,13 +153,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       if (currentIndex == data.length - 1)
                         Column(
                           children: [
-                            _buildGradientButton("Sign Up", () {}),
+                            _buildGradientButton("Sign Up", () {
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
+                            }),
                             const SizedBox(height: 12),
-                            _buildGradientButton("Login", () {}),
+                            _buildGradientButton("Login", () {
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomeScreen()));
+                            }),
                           ],
                         )
                       else
-                        const SizedBox(height: 122), // Placeholder to keep layout stable
+                        const SizedBox(height: 122),
 
                       SizedBox(height: h * 0.06),
                     ],
