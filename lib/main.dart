@@ -1,6 +1,7 @@
 import 'package:dev_partner/View/screens/browse_profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/home_screen.dart';
+import 'package:dev_partner/View/screens/on_boarding.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'dEVPartner',
-      home: HomeScreen(),
+      home: OnboardingScreen(),
     );
   }
 }
