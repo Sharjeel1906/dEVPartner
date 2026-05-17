@@ -2,6 +2,11 @@ import 'package:dev_partner/View/screens/browse_profile.dart';
 import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/on_boarding.dart';
+import 'package:dev_partner/model_view/auth_provider.dart';
+import 'package:dev_partner/model_view/chat_provider.dart';
+import 'package:dev_partner/model_view/email_provider.dart';
+import 'package:dev_partner/model_view/team_provider.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,9 +15,17 @@ import 'View/screens/register.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(
-      const MyApp(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => TeamProvider()),
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+          ChangeNotifierProvider(create: (_) => EmailProvider()),
+        ],
+        child: const MyApp()
+      ),
   );
 }
 

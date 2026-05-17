@@ -1,12 +1,10 @@
 import 'dart:convert';
+import 'package:dev_partner/model/api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = "http://10.0.2.2:8000/FYP_Partner_Finder";
-
   bool _isLoggedIn = false;
-
   bool get isLoggedIn => _isLoggedIn;
 
   // ================= LOGIN =================
@@ -17,7 +15,7 @@ class AuthService {
 
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/login/"),
+        Uri.parse("${ApiClient.baseUrl}/login/"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email.trim(),
@@ -65,7 +63,7 @@ class AuthService {
 
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/register/"),
+        Uri.parse("${ApiClient.baseUrl}/create-user/"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "username": name.trim(),
@@ -118,7 +116,7 @@ class AuthService {
 
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/refresh/"),
+        Uri.parse("${ApiClient.baseUrl}/refresh/"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"refresh": refresh}),
       );

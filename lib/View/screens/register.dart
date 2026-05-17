@@ -1,5 +1,7 @@
+import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
@@ -12,15 +14,7 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final nameController = TextEditingController();
-
-    FocusNode email_focus = FocusNode();
-    FocusNode pass_focus = FocusNode();
-    FocusNode name_focus = FocusNode();
-
+    final ap = context.read<AuthProvider>();
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
@@ -29,11 +23,10 @@ class RegisterScreen extends StatelessWidget {
         ),
         backgroundColor: C.bg,
         elevation: 0,
-        title:ShaderMask(
-          shaderCallback: (bounds) =>
-              LinearGradient(colors: [C.green, C.cyan]).createShader(
-                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-              ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [C.green, C.cyan],
+          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
           child: Text(
             "dEVPartner",
             style: GoogleFonts.dmSans(
@@ -86,24 +79,24 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     customTextField(
-                      Focusnode: name_focus,
-                      controller: nameController,
+                      Focusnode: ap.nameFocus,
+                      controller: ap.nameController,
                       hintText: "Ahmed",
                       labelText: "Name",
                     ),
                     SizedBox(height: height * 0.02),
 
                     customTextField(
-                      Focusnode: email_focus,
-                      controller: emailController,
+                      Focusnode: ap.emailFocus,
+                      controller: ap.emailController,
                       hintText: "you@uni.edu.pk",
                       labelText: "EMAIL",
                     ),
                     SizedBox(height: height * 0.02),
 
                     customTextField(
-                      Focusnode: pass_focus,
-                      controller: passwordController,
+                      Focusnode: ap.passwordFocus,
+                      controller: ap.passwordController,
                       hintText: "Password",
                       labelText: "PASSWORD",
                       isPassword: true,
@@ -121,10 +114,11 @@ class RegisterScreen extends StatelessWidget {
                         TextButton(
                           onPressed: () {
                             Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                    const LoginScreen()));
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: C.cyan,
@@ -139,31 +133,65 @@ class RegisterScreen extends StatelessWidget {
                     SizedBox(height: height * 0.01),
 
                     // Register Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: C.green,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    Consumer<AuthProvider>(
+                      builder: (context, ap, _) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: C.green,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: ap.isLoading
+                                ? null
+                                : () async {
+                                    ap.emailFocus.unfocus();
+                                    ap.passwordFocus.unfocus();
+                                    ap.nameFocus.unfocus();
+
+                                    final msg = await ap.register(
+                                      ap.emailController.text,
+                                      ap.passwordController.text,
+                                      ap.nameController.text,
+                                    );
+                                    if (msg == "Registered successfully") {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => LoginScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      customColoredBox(context, msg.toString());
+                                    }
+                                  },
+                            child: ap.isLoading
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.black,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Register",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: height * 0.017,
+                                    ),
+                                  ),
                           ),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          "Register",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: height * 0.017,
-                          ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-
             ],
           ),
         ),

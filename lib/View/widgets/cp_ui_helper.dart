@@ -114,61 +114,48 @@ Widget customizedCapsule({required String text, required String no}) {
   );
 }
 
-Widget buildDropdown(ValueNotifier<String> notifier, List<String> options) {
-  return ValueListenableBuilder<String>(
-    valueListenable: notifier,
-    builder: (context, value, _) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: C.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: C.border),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            dropdownColor: C.bg, // dropdown background
-            icon: Icon(Icons.arrow_drop_down, color: C.textPrimary.withOpacity(0.8)),
-            style: TextStyle(
-              color: C.textPrimary,
-              fontSize: 14,
-            ),
-            items: options.map((option) {
-              return DropdownMenuItem<String>(
-                value: option,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(option, style: TextStyle(color: C.textPrimary.withOpacity(0.8)),maxLines: 1,overflow: TextOverflow.visible,)
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) notifier.value = val;
-            },
-          ),
-        ),
-      );
-    },
+Widget buildDropdown({
+  required String value,
+  required List<String> options,
+  required Function(String) onChanged,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    decoration: BoxDecoration(
+      color: C.surface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: C.border),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        dropdownColor: C.bg,
+        icon: Icon(Icons.arrow_drop_down, color: C.textPrimary),
+        items: options.map((option) {
+          return DropdownMenuItem(
+            value: option,
+            child: Text(option,style: TextStyle(color: C.textPrimary.withOpacity(0.8)),maxLines: 1,overflow: TextOverflow.visible,),
+          );
+        }).toList(),
+        onChanged: (val) {
+          if (val != null) onChanged(val);
+        },
+      ),
+    ),
   );
 }
-
-// Function to build a row of two labeled dropdowns
 Widget buildLabeledDropdownRow({
   required String label1,
-  required ValueNotifier<String> notifier1,
+  required String value1,
   required List<String> options1,
+  required Function(String) onChanged1,
+
   required String label2,
-  required ValueNotifier<String> notifier2,
+  required String value2,
   required List<String> options2,
+  required Function(String) onChanged2,
+
   required double spacing,
 }) {
   return Row(
@@ -178,8 +165,12 @@ Widget buildLabeledDropdownRow({
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label1, style: TextStyle(color: C.textLabel)),
-            SizedBox(height: 6),
-            buildDropdown(notifier1, options1),
+            const SizedBox(height: 6),
+            buildDropdown(
+              value: value1,
+              options: options1,
+              onChanged: onChanged1,
+            ),
           ],
         ),
       ),
@@ -189,8 +180,12 @@ Widget buildLabeledDropdownRow({
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label2, style: TextStyle(color: C.textLabel)),
-            SizedBox(height: 6),
-            buildDropdown(notifier2, options2),
+            const SizedBox(height: 6),
+            buildDropdown(
+              value: value2,
+              options: options2,
+              onChanged: onChanged2,
+            ),
           ],
         ),
       ),
@@ -198,26 +193,49 @@ Widget buildLabeledDropdownRow({
   );
 }
 Widget buildDropdownRow3({
-  required ValueNotifier<String> notifier1,
+  required String value1,
   required List<String> options1,
+  required Function(String) onChanged1,
 
-  required ValueNotifier<String> notifier2,
+  required String value2,
   required List<String> options2,
+  required Function(String) onChanged2,
 
-  required ValueNotifier<String> notifier3,
+  required String value3,
   required List<String> options3,
+  required Function(String) onChanged3,
 
   required double spacing,
 }) {
   return Row(
     children: [
-      Expanded(child: buildDropdown(notifier1, options1)),
+      Expanded(
+        child: buildDropdown(
+          value: value1,
+          options: options1,
+          onChanged: onChanged1,
+        ),
+      ),
+
       SizedBox(width: spacing),
 
-      Expanded(child: buildDropdown(notifier2, options2)),
+      Expanded(
+        child: buildDropdown(
+          value: value2,
+          options: options2,
+          onChanged: onChanged2,
+        ),
+      ),
+
       SizedBox(width: spacing),
 
-      Expanded(child: buildDropdown(notifier3, options3)),
+      Expanded(
+        child: buildDropdown(
+          value: value3,
+          options: options3,
+          onChanged: onChanged3,
+        ),
+      ),
     ],
   );
 }
@@ -255,6 +273,105 @@ Widget spacer(){
     decoration: BoxDecoration(
       gradient: LinearGradient(
         colors: [Colors.transparent, C.green, Colors.transparent],
+      ),
+    ),
+  );
+}
+
+Future<void> customColoredBox(
+    BuildContext context,
+    String text,
+    ) {
+  return showDialog(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: C.bg, // ✅ same as screen background
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: C.green,
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: C.green.withOpacity(0.15),
+              blurRadius: 20,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black,
+                border: Border.all(
+                  color: C.green,
+                ),
+              ),
+              child: const Icon(
+                Icons.info_outline_rounded,
+                color: C.green,
+                size: 38,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Text(
+              "Information",
+              style: GoogleFonts.spaceMono(
+                color: C.green, // ✅ green title
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dmSans(
+                color: C.cyan, // ✅ green text
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: C.green,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "OK",
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );

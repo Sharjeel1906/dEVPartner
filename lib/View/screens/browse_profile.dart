@@ -5,8 +5,10 @@ import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/my_team_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
 
@@ -92,6 +94,7 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+    final up = context.watch<UserProvider>();
 
     return Scaffold(
       backgroundColor: C.bg,
@@ -221,13 +224,19 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
               ),
               SizedBox(height: height*0.02,),
               buildDropdownRow3(
-                  notifier1:selectedClass,
-                  options1: classOptions,
-                  notifier2: selectedProgram,
-                  options2: programOptions,
-                  notifier3: selectedSemester,
-                  options3: semesterOptions,
-                  spacing: width*0.02
+                value1: up.selectedClass,
+                options1: up.classOptions,
+                onChanged1: up.setClass,
+
+                value2: up.selectedProgram,
+                options2: up.programOptions,
+                onChanged2: up.setProgram,
+
+                value3: up.selectedSemester,
+                options3: up.semesterOptions,
+                onChanged3: up.setSemester,
+
+                spacing: width * 0.02,
               ),
               SizedBox(height: height*0.02,),
               ListView.builder(

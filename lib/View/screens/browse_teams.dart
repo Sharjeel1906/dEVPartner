@@ -253,15 +253,15 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
                 ),
               ),
               SizedBox(height: height*0.02,),
-              buildDropdownRow3(
-                  notifier1:selectedClass,
-                  options1: classOptions,
-                  notifier2: selectedProgram,
-                  options2: programOptions,
-                  notifier3: selectedSemester,
-                  options3: semesterOptions,
-                  spacing: width*0.02
-              ),
+              // buildDropdownRow3(
+              //     notifier1:selectedClass,
+              //     options1: classOptions,
+              //     notifier2: selectedProgram,
+              //     options2: programOptions,
+              //     notifier3: selectedSemester,
+              //     options3: semesterOptions,
+              //     spacing: width*0.02
+              // ),
               SizedBox(height: height*0.02,),
               Column(
                 children: projects.asMap().entries.map((entry) {

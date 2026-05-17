@@ -131,13 +131,13 @@ class CreateTeamScreen extends StatelessWidget {
                         /// PROJECT DOMAIN
                         Text("PROJECT DOMAIN", style: TextStyle(color: C.textLabel, fontSize: w * 0.032)),
                         SizedBox(height: h * 0.01),
-                        buildDropdown(domainNotifier, [
-                          "Select project domain...",
-                          "AI/ML",
-                          "Web Development",
-                          "Mobile App",
-                          "Blockchain"
-                        ]),
+                        // buildDropdown(domainNotifier, [
+                        //   "Select project domain...",
+                        //   "AI/ML",
+                        //   "Web Development",
+                        //   "Mobile App",
+                        //   "Blockchain"
+                        // ]),
 
                         spacer(),
 
@@ -195,13 +195,13 @@ class CreateTeamScreen extends StatelessWidget {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                buildDropdown(roleNotifier, [
-                                  "Select a role...",
-                                  "Frontend Dev",
-                                  "Backend Dev",
-                                  "UI/UX Designer",
-                                  "Project Manager"
-                                ]),
+                                // buildDropdown(roleNotifier, [
+                                //   "Select a role...",
+                                //   "Frontend Dev",
+                                //   "Backend Dev",
+                                //   "UI/UX Designer",
+                                //   "Project Manager"
+                                // ]),
                                 // Listen to dropdown change to add to list
                                 ValueListenableBuilder<String>(
                                   valueListenable: roleNotifier,

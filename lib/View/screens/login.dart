@@ -1,6 +1,9 @@
+import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
+import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
@@ -12,13 +15,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-
-    FocusNode email_focus = FocusNode();
-    FocusNode pass_focus = FocusNode();
-
+    final ap = context.read<AuthProvider>();
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
@@ -27,11 +24,10 @@ class LoginScreen extends StatelessWidget {
         ),
         backgroundColor: C.bg,
         elevation: 0,
-        title:ShaderMask(
-          shaderCallback: (bounds) =>
-              LinearGradient(colors: [C.green, C.cyan]).createShader(
-                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-              ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [C.green, C.cyan],
+          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
           child: Text(
             "dEVPartner",
             style: GoogleFonts.dmSans(
@@ -71,7 +67,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height:height*0.05 ),
+              SizedBox(height: height * 0.05),
 
               // Card Container
               Container(
@@ -83,18 +79,17 @@ class LoginScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-
                     customTextField(
-                      Focusnode: email_focus,
-                      controller: emailController,
+                      Focusnode: ap.emailFocus,
+                      controller: ap.emailController,
                       hintText: "you@uni.edu.pk",
                       labelText: "EMAIL",
                     ),
-                    SizedBox(height:height*0.02 ),
+                    SizedBox(height: height * 0.02),
 
                     customTextField(
-                      Focusnode: pass_focus,
-                      controller: passwordController,
+                      Focusnode: ap.passwordFocus,
+                      controller: ap.passwordController,
                       hintText: "Password",
                       labelText: "PASSWORD",
                       isPassword: true,
@@ -108,10 +103,15 @@ class LoginScreen extends StatelessWidget {
                           "Don't have an account?",
                           style: TextStyle(color: C.textLabel),
                         ),
-                        SizedBox(width: width*0.01),
+                        SizedBox(width: width * 0.01),
                         TextButton(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>RegisterScreen()));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RegisterScreen(),
+                              ),
+                            );
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: C.cyan, // Text color
@@ -124,27 +124,66 @@ class LoginScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: height * 0.04),
+                    Consumer<AuthProvider>(
+                      builder: (context, ap, _) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: C.green,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: ap.isLoading
+                                ? null
+                                : () async {
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: C.green,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                              ap.emailFocus.unfocus();
+                              ap.passwordFocus.unfocus();
+
+                              final msg = await ap.login(
+                                ap.emailController.text.trim(),
+                                ap.passwordController.text.trim(),
+                              );
+
+                              if (!context.mounted) return;
+
+                              if (msg == "Logged in successfully") {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const HomeScreen(),
+                                  ),
+                                );
+                              } else {
+                                customColoredBox(
+                                  context,
+                                  msg,
+                                );
+                              }
+                            },
+                            child: ap.isLoading
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: C.green,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "LOGIN",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: height * 0.017,
+                                    ),
+                                  ),
                           ),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          "LOGIN",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: height*0.017,
-                          ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
