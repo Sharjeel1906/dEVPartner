@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/model_view/auth_provider.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -151,6 +155,18 @@ class LoginScreen extends StatelessWidget {
                               if (!context.mounted) return;
 
                               if (msg == "Logged in successfully") {
+                                ap.clear();
+                                final up = context.read<UserProvider>();
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                final userJson = prefs.getString("user");
+                                if (userJson != null) {
+                                  up.applyUserFromMap(
+                                    jsonDecode(userJson) as Map<String, dynamic>,
+                                  );
+                                }
+                                await up.loadCurrentUser(silent: true);
+                                if (!context.mounted) return;
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -160,7 +176,7 @@ class LoginScreen extends StatelessWidget {
                               } else {
                                 customColoredBox(
                                   context,
-                                  msg,
+                                  "Incorrect Password or Email",
                                 );
                               }
                             },

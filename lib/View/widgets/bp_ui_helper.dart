@@ -1,7 +1,8 @@
-import 'package:dev_partner/View/screens/create_profile.dart';
 import 'package:dev_partner/View/screens/user_profile.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 import '../models/profile.dart';
 
@@ -29,7 +30,7 @@ Widget drawerItem(IconData icon, String title, VoidCallback onTap) {
     ),
   );
 }
-Widget profileCard(BuildContext context, Profile profile) {
+Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> user) {
   // MediaQuery values
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
@@ -172,8 +173,12 @@ Widget profileCard(BuildContext context, Profile profile) {
                 ),
                 alignment: Alignment.center,
                 child: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
+                  onTap: () {
+                    context.read<UserProvider>().setViewedUser(user);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => UserProfileScreen()),
+                    );
                   },
                   child: Text(
                     "View Profile",
@@ -204,8 +209,12 @@ Widget profileCard(BuildContext context, Profile profile) {
                         color: Colors.greenAccent, size: screenWidth * 0.04),
                     SizedBox(width: screenWidth * 0.015),
                     GestureDetector(
-                      onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfileScreen()));
+                      onTap: () {
+                        context.read<UserProvider>().setViewedUser(user);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => UserProfileScreen()),
+                        );
                       },
                       child: Text(
                         "Message",

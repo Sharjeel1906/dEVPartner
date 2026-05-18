@@ -5,17 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
 
+/// ================= EMPTY STATE (UNCHANGED UI) =================
 Widget buildEmptyState(double w, double h, BuildContext context) {
   return Padding(
     padding: EdgeInsets.symmetric(horizontal: w * 0.08),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Large faded icon for depth
         Icon(Icons.groups_outlined, size: w * 0.25, color: C.surfaceHover),
         SizedBox(height: h * 0.03),
 
-        // Punchline
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
             colors: [Colors.white, C.textMuted],
@@ -36,23 +35,39 @@ Widget buildEmptyState(double w, double h, BuildContext context) {
         Text(
           "You aren't part of any project yet. Start a new legacy or join an existing mission.",
           textAlign: TextAlign.center,
-          style: GoogleFonts.dmSans(color: C.textMuted, fontSize: w * 0.035),
+          style: GoogleFonts.dmSans(
+            color: C.textMuted,
+            fontSize: w * 0.035,
+          ),
         ),
 
         SizedBox(height: h * 0.06),
 
-        // Action Buttons
-        actionButton(w, "Discover Teams", C.cyan, Icons.search, () {
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>BrowseTeamsScreen()));
-        }),
+        actionButton(
+          w,
+          "Discover Teams",
+          C.cyan,
+          Icons.search,
+              () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => BrowseTeamsScreen()),
+            );
+          },
+        ),
+
         SizedBox(height: h * 0.02),
+
         actionButton(
           w,
           "Create My Own",
           C.green,
           Icons.add,
-          () {
-            Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateTeamScreen()));
+              () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CreateTeamScreen()),
+            );
           },
           isOutlined: true,
         ),
@@ -61,15 +76,22 @@ Widget buildEmptyState(double w, double h, BuildContext context) {
   );
 }
 
-/// THE VIEW IF USER HAS A TEAM
-Widget buildTeamView(double w, double h, BuildContext context) {
+/// ================= TEAM VIEW (NOW DYNAMIC FROM API) =================
+Widget buildTeamView(
+    double w,
+    double h,
+    BuildContext context,
+    Map<String, dynamic> team,
+    ) {
+  final members = team["members"] ?? [];
+
   return SingleChildScrollView(
     physics: const BouncingScrollPhysics(),
     padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.02),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// 1. TEAM HERO SECTION
+        /// HERO CARD
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -79,7 +101,6 @@ Widget buildTeamView(double w, double h, BuildContext context) {
           ),
           child: Column(
             children: [
-              // Top Accent Line
               Container(
                 height: 3,
                 decoration: const BoxDecoration(
@@ -87,6 +108,7 @@ Widget buildTeamView(double w, double h, BuildContext context) {
                   gradient: LinearGradient(colors: [C.green, C.cyan]),
                 ),
               ),
+
               Padding(
                 padding: EdgeInsets.all(w * 0.06),
                 child: Column(
@@ -96,16 +118,16 @@ Widget buildTeamView(double w, double h, BuildContext context) {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         customizedCapsule(text: "ACTIVE MISSION", no: "1"),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: C.surface, shape: BoxShape.circle),
-                          child: const Icon(Icons.settings_outlined, color: C.textMuted, size: 20),
-                        )
                       ],
                     ),
+
                     SizedBox(height: h * 0.025),
+
+                    /// TEAM NAME (DYNAMIC)
                     Text(
-                      "Neural Ninjas".toUpperCase(),
+                      (team["team_name"] ?? "TEAM")
+                          .toString()
+                          .toUpperCase(),
                       style: GoogleFonts.spaceMono(
                         color: Colors.white,
                         fontSize: w * 0.07,
@@ -113,21 +135,66 @@ Widget buildTeamView(double w, double h, BuildContext context) {
                         letterSpacing: 1.5,
                       ),
                     ),
+
                     SizedBox(height: h * 0.005),
+
+                    /// DOMAIN SECTION (TEXT ONLY)
                     Text(
-                      "Architecting the future of decentralized AI through low-latency neural nodes.",
-                      style: GoogleFonts.dmSans(color: C.textMuted, fontSize: w * 0.035, height: 1.4),
+                      "PROJECT DOMAIN",
+                      style: GoogleFonts.spaceMono(
+                        color: C.green,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.7,
+                      ),
                     ),
 
-                    spacer(), // Your gradient helper
+                    SizedBox(height: h * 0.01),
 
-                    /// QUICK STATS ROW
+                    Text(
+                      (team["project_domain"]?.toString().isNotEmpty == true)
+                          ? team["project_domain"].toString().toUpperCase()
+                          : "Not specified",
+                      style: GoogleFonts.dmSans(
+                        color: C.textPrimary,
+                        fontSize: w * 0.035,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                    SizedBox(height: h * 0.01),
+
+                    /// ROLES SECTION (CHIPS ONLY)
+                    Text(
+                      "REQUIRED ROLES",
+                      style: GoogleFonts.spaceMono(
+                        color: C.cyan,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    SizedBox(height: h * 0.01),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: (team["req_role"].toString().toUpperCase() ?? "")
+                          .toString()
+                          .split(",")
+                          .where((r) => r.trim().isNotEmpty)
+                          .map((role) => _techBadge(role.trim(), C.cyan))
+                          .toList(),
+                    ),
+                    spacer(),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildQuickStat("84%", "PROGRESS", C.green),
-                        _buildQuickStat("12", "TASKS", C.cyan),
-                        _buildQuickStat("18d", "REMAINING", C.pink),
+                        _buildQuickStat(
+                          "${members.length}",
+                          "MEMBERS",
+                          C.green,
+                        ),
+                        _buildQuickStat("ACTIVE", "STATUS", C.cyan),
+                        _buildQuickStat("LIVE", "PROJECT", C.pink),
                       ],
                     ),
                   ],
@@ -139,21 +206,42 @@ Widget buildTeamView(double w, double h, BuildContext context) {
 
         SizedBox(height: h * 0.04),
 
-        /// 2. CORE CREW SECTION
-        Text("CORE CREW", style: GoogleFonts.spaceMono(color: C.green, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        /// CORE CREW
+        Text(
+          "CORE CREW",
+          style: GoogleFonts.spaceMono(
+            color: C.green,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
 
         SizedBox(height: h * 0.02),
 
-        // Detailed Member Cards
-        _buildProfessionalMemberTile(w, "Sharjeel Ahmed", "Team Lead / Architect", true),
-        _buildProfessionalMemberTile(w, "Alex Rivera", "Senior Flutter Developer", false),
-        _buildProfessionalMemberTile(w, "Sarah Chen", "ML Engineer", false),
+        /// MEMBERS (DYNAMIC)
+        ...members.map((m) {
+          return _buildProfessionalMemberTile(
+            w,
+            m["username"] ?? "User",
+            m["mem_role"] ?? "Member",
+            m["mem_role"] == "leader",
+          );
+        }).toList(),
 
         SizedBox(height: h * 0.04),
 
-        /// 3. TECH STACK & ECOSYSTEM
-        Text("PROJECT ECOSYSTEM", style: GoogleFonts.spaceMono(color: C.cyan, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        /// ECOSYSTEM (STATIC UI KEPT SAME)
+        Text(
+          "PROJECT ECOSYSTEM",
+          style: GoogleFonts.spaceMono(
+            color: C.cyan,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+
         SizedBox(height: h * 0.02),
+
         Container(
           width: double.infinity,
           padding: EdgeInsets.all(w * 0.04),
@@ -166,11 +254,9 @@ Widget buildTeamView(double w, double h, BuildContext context) {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _techBadge("Python 3.10", C.green),
-              _techBadge("PyTorch", C.pink),
               _techBadge("Flutter", C.cyan),
-              _techBadge("Firebase", C.amber),
-              _techBadge("FastAPI", C.blue),
+              _techBadge("Django", C.green),
+              _techBadge("API", C.pink),
             ],
           ),
         ),
@@ -181,64 +267,98 @@ Widget buildTeamView(double w, double h, BuildContext context) {
   );
 }
 
+/// ================= QUICK STAT =================
 Widget _buildQuickStat(String value, String label, Color color) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(value, style: GoogleFonts.spaceMono(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
-      Text(label, style: GoogleFonts.spaceMono(color: C.textMuted, fontSize: 10, fontWeight: FontWeight.bold)),
+      Text(
+        value,
+        style: GoogleFonts.spaceMono(
+          color: color,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      Text(
+        label,
+        style: GoogleFonts.spaceMono(
+          color: C.textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     ],
   );
 }
 
-Widget _buildProfessionalMemberTile(double w, String name, String role, bool isAdmin) {
+/// ================= MEMBER TILE =================
+Widget _buildProfessionalMemberTile(
+    double w,
+    String name,
+    String role,
+    bool isAdmin,
+    ) {
   return Container(
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: C.surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: isAdmin ? C.green.withOpacity(0.3) : C.blue.withOpacity(0.3)),
+      border: Border.all(
+        color: isAdmin ? C.green.withOpacity(0.3) : C.blue.withOpacity(0.3),
+      ),
     ),
     child: Row(
       children: [
-        Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: isAdmin ? C.green : C.cyan)),
-              child: CircleAvatar(radius: 22, backgroundColor: C.bg, child: Icon(Icons.person, color: isAdmin ? C.green : C.cyan)),
-            ),
-            if (isAdmin)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: C.green, shape: BoxShape.circle),
-                  child: const Icon(Icons.bolt, size: 10, color: Colors.black),
-                ),
-              )
-          ],
+        CircleAvatar(
+          radius: 22,
+          backgroundColor: C.bg,
+          child: Icon(
+            Icons.person,
+            color: isAdmin ? C.green : C.cyan,
+          ),
         ),
         const SizedBox(width: 16),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(role, style: GoogleFonts.dmSans(color: C.textMuted, fontSize: 12)),
+              Text(
+                name,
+                style: GoogleFonts.dmSans(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                role,
+                style: GoogleFonts.dmSans(
+                  color: C.textMuted,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ),
+
         if (isAdmin)
-          Text("ADMIN", style: GoogleFonts.spaceMono(color: C.green, fontSize: 9, fontWeight: FontWeight.bold)),
-        
+          Text(
+            "ADMIN",
+            style: GoogleFonts.spaceMono(
+              color: C.green,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
       ],
     ),
   );
 }
 
+/// ================= TECH BADGE =================
 Widget _techBadge(String text, Color color) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -250,62 +370,36 @@ Widget _techBadge(String text, Color color) {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(text, style: GoogleFonts.spaceMono(color: Colors.white, fontSize: 11)),
-      ],
-    ),
-  );
-}
-// Common UI Components for the Screen
-Widget memberTile(double w) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: C.surface,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: C.border),
-    ),
-    child: Row(
-      children: [
-        const CircleAvatar(
-          backgroundColor: C.border,
-          child: Icon(Icons.person, color: C.textMuted),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Alex Rivera",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                "Lead Developer",
-                style: TextStyle(color: C.green.withOpacity(0.7), fontSize: 11),
-              ),
-            ],
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
           ),
         ),
-        const Icon(Icons.chat_bubble_outline, color: C.cyan, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: GoogleFonts.spaceMono(
+            color: Colors.white,
+            fontSize: 11,
+          ),
+        ),
       ],
     ),
   );
 }
 
+/// ================= ACTION BUTTON (UNCHANGED) =================
 Widget actionButton(
-  double w,
-  String label,
-  Color color,
-  IconData icon,
-  VoidCallback onTap, {
-  bool isOutlined = false,
-}) {
+    double w,
+    String label,
+    Color color,
+    IconData icon,
+    VoidCallback onTap, {
+      bool isOutlined = false,
+    }) {
   return GestureDetector(
     onTap: onTap,
     child: Container(

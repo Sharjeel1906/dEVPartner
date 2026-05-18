@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,10 +8,17 @@ import '../model/user_services.dart';
 
 class UserProvider extends ChangeNotifier {
   final UserServices _userService = UserServices();
-
+  String? currentImageUrl;
+  String? currentCvName;
+  String drawerUserName = "";
+  String drawerUserDomain = "";
   bool isLoading = false;
+  List<dynamic> allUsers = [];
+  List<dynamic> filteredUsers = [];
+  String searchQuery = "";
+  int? currentUserId;
+  Map<String, dynamic>? viewedUser;
 
-  // ================= CONTROLLERS =================
   final Map<String, TextEditingController> profile_controllers = {
     "name": TextEditingController(),
     "email": TextEditingController(),
@@ -31,7 +40,6 @@ class UserProvider extends ChangeNotifier {
     "portfolio": FocusNode(),
   };
 
-  // ================= DROPDOWN OPTIONS =================
   final List<String> genderOptions = ["Select", "Male", "Female", "Other"];
   final List<String> roleOptions = ["Select", "Leader", "Member"];
 
@@ -59,7 +67,6 @@ class UserProvider extends ChangeNotifier {
     "Expert",
   ];
 
-  // ================= SELECTED VALUES (FIXED - ONLY ONCE) =================
   String selectedGender = "Select";
   String selectedRole = "Select";
   String selectedSemester = "Select";
@@ -68,14 +75,15 @@ class UserProvider extends ChangeNotifier {
   String selectedProgram = "Select";
   String selectedExp = "Select";
 
-  // ================= FILES =================
+  String filterClass = "Select";
+  String filterProgram = "Select";
+  String filterSemester = "Select";
+
   File? selectedImage;
   File? selectedCV;
 
-  // ================= SKILLS =================
   List<String> selectedSkills = [];
 
-  // ================= SETTERS =================
   void setGender(String value) {
     selectedGender = value;
     notifyListeners();
@@ -86,13 +94,14 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSemester(String value) {
-    selectedSemester = value;
-    notifyListeners();
-  }
 
   void setSection(String value) {
     selectedSection = value;
+    notifyListeners();
+  }
+
+  void setSemester(String value) {
+    selectedSemester = value;
     notifyListeners();
   }
 
@@ -106,13 +115,33 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFilterSemester(String value) {
+    filterSemester = value;
+    applyFilters();
+    notifyListeners();
+  }
+
+  void setFilterClass(String value) {
+    filterClass = value;
+    applyFilters();
+    notifyListeners();
+  }
+
+  void setFilterProgram(String value) {
+    filterProgram = value;
+    applyFilters();
+    notifyListeners();
+  }
+
   void setExp(String value) {
     selectedExp = value;
     notifyListeners();
   }
 
-  // ================= FILE SETTERS =================
   void setImage(File? file) {
+    selectedImage = null;
+    notifyListeners();
+
     selectedImage = file;
     notifyListeners();
   }
@@ -122,7 +151,6 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================= SKILLS =================
   void addSkill(String skill) {
     if (!selectedSkills.contains(skill)) {
       selectedSkills.add(skill);
@@ -150,6 +178,7 @@ class UserProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<void> pickPdf() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -161,7 +190,6 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // ================= UPDATE USER =================
   Future<ApiResponse<dynamic>> updateUser({
     required String gender,
     required String role,
@@ -199,6 +227,13 @@ class UserProvider extends ChangeNotifier {
         cv: cv,
       );
 
+      if (result.success) {
+        selectedImage = null;
+        selectedCV = null;
+        await loadCurrentUser();
+        await loadAllUsers();
+      }
+
       return result;
     } finally {
       isLoading = false;
@@ -206,51 +241,230 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-// ================= GET USER =================
-  Future<dynamic> getUser(int userId) async {
-    try {
-      isLoading = true;
-      notifyListeners();
+  // Future<dynamic> getUser(int userId) async {
+  //   try {
+  //     isLoading = true;
+  //     notifyListeners();
+  //
+  //     final result = await _userService.getUser(userId);
+  //     return result;
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 
-      final result = await _userService.getUser(userId);
-      return result;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
+  // Future<dynamic> getCurrentUser() async {
+  //   try {
+  //     isLoading = true;
+  //     notifyListeners();
+  //     final result = await _userService.getCurrentUserDetail();
+  //     return result;
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 
-// ================= GET ALL USERS =================
-  Future<List<dynamic>> getAllUsers() async {
+  Future<void> loadAllUsers() async {
     try {
       isLoading = true;
       notifyListeners();
 
       final result = await _userService.getAllUsers();
-      return result;
+
+      allUsers = result;
+      filteredUsers = result;
+
+      applyFilters();
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  // ================= CLEANUP =================
+  void applyUserFromMap(Map<String, dynamic> user) {
+    final Map<String, dynamic> profile = user["profile"] ?? {};
+
+    currentUserId = user["id"] is int
+        ? user["id"] as int
+        : int.tryParse(user["id"]?.toString() ?? "");
+
+    drawerUserName = user["username"]?.toString() ?? "";
+    drawerUserDomain =
+        profile["domain"]?.toString() ?? user["domain"]?.toString() ?? "";
+
+    profile_controllers["name"]?.text = drawerUserName;
+    profile_controllers["email"]?.text = user["email"]?.toString() ?? "";
+    profile_controllers["about"]?.text = profile["about"]?.toString() ?? "";
+    profile_controllers["domain"]?.text = drawerUserDomain;
+    profile_controllers["linkedin"]?.text =
+        profile["linked_in_link"]?.toString() ?? "";
+    profile_controllers["github"]?.text =
+        profile["github_link"]?.toString() ?? "";
+    profile_controllers["portfolio"]?.text =
+        profile["portfolio_link"]?.toString() ?? "";
+
+    final g = profile["gender"]?.toString() ?? "";
+    final r = profile["role"]?.toString() ?? "";
+    final se = profile["semester"]?.toString() ?? "";
+    final cl = profile["class_name"]?.toString() ?? "";
+    final pr = profile["program"]?.toString() ?? "";
+    final sc = profile["section"]?.toString() ?? "";
+    final ex = profile["experience"]?.toString() ?? "";
+
+    if (genderOptions.contains(g)) selectedGender = g;
+    if (roleOptions.contains(r)) selectedRole = r;
+    if (semesterOptions.contains(se)) selectedSemester = se;
+    if (classOptions.contains(cl)) selectedClass = cl;
+    if (programOptions.contains(pr)) selectedProgram = pr;
+    if (sectionOptions.contains(sc)) selectedSection = sc;
+    if (experienceOptions.contains(ex)) selectedExp = ex;
+
+    final skills = user["skills"];
+    if (skills is List) {
+      selectedSkills = skills.map((s) => s["name"].toString()).toList();
+    }
+
+    const baseUrl = "http://192.168.100.11:8000";
+    final pfp = profile["pfp_path"]?.toString() ??
+        user["pfp_path"]?.toString() ??
+        "";
+    final cv = profile["cv_path"]?.toString() ?? "";
+
+    currentImageUrl = pfp.isNotEmpty ? "$baseUrl$pfp" : null;
+    currentCvName = cv.isNotEmpty ? cv.split("/").last : null;
+  }
+
+  Future<void> loadCachedUserFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString("user");
+    if (userJson == null) return;
+    applyUserFromMap(jsonDecode(userJson) as Map<String, dynamic>);
+    notifyListeners();
+  }
+
+  Future<void> loadCurrentUser({bool silent = false}) async {
+    try {
+      if (!silent) {
+        isLoading = true;
+        notifyListeners();
+      }
+
+      final result = await _userService.getCurrentUserDetail();
+      if (result != null) {
+        applyUserFromMap(result as Map<String, dynamic>);
+      }
+    } finally {
+      if (!silent) {
+        isLoading = false;
+      }
+      notifyListeners();
+    }
+  }
+
+  void setViewedUser(Map<String, dynamic> user) {
+    viewedUser = user;
+    notifyListeners();
+  }
+
+  Future<void> refreshBrowseData() async {
+    await loadCurrentUser();
+    await loadAllUsers();
+  }
+
+  void resetForm() {
+    for (var controller in profile_controllers.values) {
+      controller.clear();
+    }
+    selectedGender   = "Select";
+    selectedRole     = "Select";
+    selectedSemester = "Select";
+    selectedSection  = "Select";
+    selectedClass    = "Select";
+    selectedProgram  = "Select";
+    selectedExp      = "Select";
+    filterClass      = "Select";
+    filterProgram    = "Select";
+    filterSemester   = "Select";
+    allUsers         = [];
+    filteredUsers    = [];
+    searchQuery      = "";
+    currentImageUrl  = null;
+    currentCvName    = null;
+    drawerUserName   = "";
+    drawerUserDomain = "";
+    currentUserId    = null;
+    viewedUser       = null;
+    selectedSkills   = [];
+    selectedImage    = null;
+    selectedCV       = null;
+    notifyListeners();
+  }
+
+  void setSearchQuery(String value) {
+    searchQuery = value;
+    applyFilters();
+    notifyListeners();
+  }
+
+  void applyFilters() {
+    filteredUsers = allUsers.where((user) {
+      final profile = user["profile"] ?? {};
+
+      final username =
+      (user["username"] ?? "")
+          .toString()
+          .toLowerCase();
+
+      final domain =
+      (profile["domain"] ?? "")
+          .toString()
+          .toLowerCase();
+
+      final semester =
+      (profile["semester"] ?? "")
+          .toString();
+
+      final className =
+      (profile["class_name"] ?? "")
+          .toString();
+
+      final program =
+      (profile["program"] ?? "")
+          .toString();
+
+      final matchesSearch =
+          username.contains(searchQuery.toLowerCase()) ||
+              domain.contains(searchQuery.toLowerCase());
+
+      final matchesSemester =
+          filterSemester == "Select" ||
+              semester == filterSemester;
+
+      final matchesClass =
+          filterClass == "Select" ||
+              className == filterClass;
+
+      final matchesProgram =
+          filterProgram == "Select" ||
+              program == filterProgram;
+
+      return matchesSearch &&
+          matchesSemester &&
+          matchesClass &&
+          matchesProgram;
+    }).toList();
+  }
+
   @override
   void dispose() {
     for (var c in profile_controllers.values) {
       c.dispose();
     }
-    super.dispose();
-  }
-
-  void clear() {
-    for (var controller in profile_controllers.values) {
-      controller.clear();
-    }
     for (var f in profile_focus.values) {
       f.dispose();
     }
     super.dispose();
-    notifyListeners();
   }
 }

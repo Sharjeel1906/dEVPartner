@@ -1,9 +1,10 @@
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 import '../model/auth_services.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
@@ -38,11 +39,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
     try {
       isLoading = true;
       notifyListeners();
+
       await _authService.logout();
+
+      nameController.clear();
+      emailController.clear();
+      passwordController.clear();
+
+      emailFocus.unfocus();
+      passwordFocus.unfocus();
+      context.read<UserProvider>().resetForm();
     } finally {
       isLoading = false;
       notifyListeners();

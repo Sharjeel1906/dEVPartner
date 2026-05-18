@@ -130,4 +130,34 @@ class TeamService {
       return null;
     }
   }
+  Future<Map<String, dynamic>?> getMyTeam() async {
+    try {
+      final request = http.Request(
+        "GET",
+        Uri.parse("${ApiClient.baseUrl}/my_team/"),
+      );
+
+      final response = await _client.sendRequest(request);
+      final body = await response.stream.bytesToString();
+
+      final data = jsonDecode(body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "data": data,
+        };
+      }
+
+      return {
+        "success": false,
+        "message": data["message"] ?? "No team found",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Something went wrong",
+      };
+    }
+  }
 }

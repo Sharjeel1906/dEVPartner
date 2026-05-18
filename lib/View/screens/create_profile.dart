@@ -7,13 +7,35 @@ import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
 
-class CreateProfileScreen extends StatelessWidget {
+class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
+
+  @override
+  State<CreateProfileScreen> createState() => _CreateProfileScreenState();
+}
+
+class _CreateProfileScreenState extends State<CreateProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().loadCurrentUser();
+    });
+  }
+
+  bool _isFormEmpty(UserProvider up) {
+    return up.profile_controllers["name"]!.text.isEmpty &&
+        up.profile_controllers["email"]!.text.isEmpty &&
+        up.selectedGender == "Select" &&
+        up.selectedSkills.isEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final up = context.watch<UserProvider>();
+
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
@@ -35,16 +57,17 @@ class CreateProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-
-      body: SafeArea(
+      body: up.isLoading && _isFormEmpty(up)
+          ? Center(
+        child: CircularProgressIndicator(color: C.green),
+      )
+          : SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: height * 0.02),
-
-              // Step Capsules
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -72,8 +95,6 @@ class CreateProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    // ── PERSONAL ──────────────────────────────────────────
                     sectionHeading(context: context, text: "Personal"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(
@@ -81,26 +102,26 @@ class CreateProfileScreen extends StatelessWidget {
                       text: "Your vibe, your intro⚡",
                     ),
                     SizedBox(height: height * 0.02),
-
                     Center(
                       child: GestureDetector(
                         onTap: () async {
                           await up.pickImage();
                         },
                         child: CircleAvatar(
-                          radius: 45,
+                          radius: 65,
                           backgroundColor: C.surface,
                           backgroundImage: up.selectedImage != null
-                              ? FileImage(up.selectedImage!)
+                              ? FileImage(up.selectedImage!) as ImageProvider
+                              : up.currentImageUrl != null
+                              ? NetworkImage(up.currentImageUrl!)
                               : null,
-                          child: up.selectedImage == null
+                          child: up.selectedImage == null && up.currentImageUrl == null
                               ? Icon(Icons.add_a_photo, color: C.green, size: 40)
                               : null,
                         ),
                       ),
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["name"]!,
                       controller: up.profile_controllers["name"]!,
@@ -108,7 +129,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "  Name",
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["email"]!,
                       controller: up.profile_controllers["email"]!,
@@ -116,7 +136,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "Email",
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["about"]!,
                       controller: up.profile_controllers["about"]!,
@@ -124,7 +143,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "ABOUT",
                     ),
                     SizedBox(height: height * 0.02),
-
                     buildLabeledDropdownRow(
                       label1: "Gender",
                       value1: up.selectedGender,
@@ -138,8 +156,6 @@ class CreateProfileScreen extends StatelessWidget {
                     ),
                     SizedBox(height: height * 0.02),
                     spacer(),
-
-                    // ── ACADEMIC ──────────────────────────────────────────
                     sectionHeading(context: context, text: "Academic"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(
@@ -147,7 +163,6 @@ class CreateProfileScreen extends StatelessWidget {
                       text: "Your academic saga, in brief✨",
                     ),
                     SizedBox(height: height * 0.02),
-
                     buildLabeledDropdownRow(
                       label1: "SEMESTER",
                       value1: up.selectedSemester,
@@ -160,7 +175,6 @@ class CreateProfileScreen extends StatelessWidget {
                       spacing: width * 0.03,
                     ),
                     SizedBox(height: height * 0.02),
-
                     buildLabeledDropdownRow(
                       label1: "PROGRAM",
                       value1: up.selectedProgram,
@@ -174,8 +188,6 @@ class CreateProfileScreen extends StatelessWidget {
                     ),
                     SizedBox(height: height * 0.03),
                     spacer(),
-
-                    // ── SKILLS ────────────────────────────────────────────
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -186,8 +198,6 @@ class CreateProfileScreen extends StatelessWidget {
                           text: "Flex your talents😎",
                         ),
                         SizedBox(height: height * 0.02),
-
-                        // Chips
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -238,10 +248,7 @@ class CreateProfileScreen extends StatelessWidget {
                             );
                           }).toList(),
                         ),
-
                         SizedBox(height: height * 0.02),
-
-                        // Skill Input Row
                         Row(
                           children: [
                             Expanded(
@@ -290,9 +297,7 @@ class CreateProfileScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-
                             const SizedBox(width: 10),
-
                             Container(
                               decoration: BoxDecoration(
                                 color: C.green,
@@ -325,8 +330,6 @@ class CreateProfileScreen extends StatelessWidget {
                     ),
                     SizedBox(height: height * 0.03),
                     spacer(),
-
-                    // ── DOMAIN & EXPERIENCE ───────────────────────────────
                     sectionHeading(context: context, text: "Domain & Experience"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(
@@ -334,7 +337,6 @@ class CreateProfileScreen extends StatelessWidget {
                       text: "Your hustle in a nutshell🚀",
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["domain"]!,
                       controller: up.profile_controllers["domain"]!,
@@ -342,7 +344,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "DOMAIN",
                     ),
                     SizedBox(height: height * 0.01),
-
                     Text(
                       "EXPERIENCE",
                       style: TextStyle(
@@ -351,7 +352,6 @@ class CreateProfileScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: height * 0.001),
-
                     buildDropdown(
                       value: up.selectedExp,
                       options: up.experienceOptions,
@@ -359,8 +359,6 @@ class CreateProfileScreen extends StatelessWidget {
                     ),
                     SizedBox(height: height * 0.02),
                     spacer(),
-
-                    // ── LINKS ─────────────────────────────────────────────
                     sectionHeading(context: context, text: "Links"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(
@@ -368,7 +366,6 @@ class CreateProfileScreen extends StatelessWidget {
                       text: "Drop links that scream 'look at me!🌟",
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["linkedin"]!,
                       controller: up.profile_controllers["linkedin"]!,
@@ -376,7 +373,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "LINKEDIN URL",
                     ),
                     SizedBox(height: height * 0.03),
-
                     customTextField(
                       Focusnode: up.profile_focus["github"]!,
                       controller: up.profile_controllers["github"]!,
@@ -384,7 +380,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "GITHUB URL",
                     ),
                     SizedBox(height: height * 0.02),
-
                     customTextField(
                       Focusnode: up.profile_focus["portfolio"]!,
                       controller: up.profile_controllers["portfolio"]!,
@@ -392,8 +387,6 @@ class CreateProfileScreen extends StatelessWidget {
                       labelText: "PORTFOLIO URL",
                     ),
                     SizedBox(height: height * 0.03),
-
-                    // ── CV ────────────────────────────────────────────────
                     Text(
                       "CV/RESUME",
                       style: GoogleFonts.spaceMono(
@@ -402,7 +395,6 @@ class CreateProfileScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: height * 0.01),
-
                     GestureDetector(
                       onTap: () async {
                         await up.pickPdf();
@@ -417,11 +409,14 @@ class CreateProfileScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              up.selectedCV != null
-                                  ? up.selectedCV!.path.split('/').last
-                                  : "Pick your CV (PDF)",
-                              style: TextStyle(color: C.textLabel),
+                            Expanded(
+                              child: Text(
+                                up.selectedCV != null
+                                    ? up.selectedCV!.path.split('/').last
+                                    : up.currentCvName ?? "Pick your CV (PDF)",
+                                style: TextStyle(color: C.textLabel),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             Icon(Icons.attach_file, color: C.green),
                           ],
@@ -429,8 +424,6 @@ class CreateProfileScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: height * 0.03),
-
-                    // ── SAVE BUTTON ───────────────────────────────────────
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -441,7 +434,9 @@ class CreateProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: () async {
+                        onPressed: up.isLoading
+                            ? null
+                            : () async {
                           final msg = await up.updateUser(
                             gender: up.selectedGender,
                             role: up.selectedRole,
@@ -476,11 +471,11 @@ class CreateProfileScreen extends StatelessWidget {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: C.green,
+                            color: Colors.black,
                             strokeWidth: 2,
                           ),
                         )
-                        :Text(
+                            : Text(
                           "Save Profile",
                           style: GoogleFonts.spaceMono(
                             color: Colors.black,

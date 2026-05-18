@@ -1,24 +1,67 @@
-import 'dart:io';
+import 'package:dev_partner/model_view/team_provider.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
 import '../widgets/up_ui_helper.dart';
 
-class UserProfileScreen extends StatelessWidget {
+class UserProfileScreen extends StatefulWidget {
   UserProfileScreen({super.key});
 
-  // Dummy skills
-  final List<String> skills = ["Flutter", "Python", "React"];
+  @override
+  State<UserProfileScreen> createState() => _UserProfileScreenState();
+}
 
-  // Dummy selectedImage (null means fallback icon)
-  final ValueNotifier<File?> selectedImage = ValueNotifier<File?>(null);
+class _UserProfileScreenState extends State<UserProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<TeamProvider>().getMyTeam();
+    });
+  }
+
+  int? _userId(Map<String, dynamic> user) {
+    final id = user["id"];
+    if (id is int) return id;
+    return int.tryParse(id?.toString() ?? "");
+  }
+
+  int? _teamId(Map<String, dynamic> team) {
+    final id = team["id"] ?? team["team_id"];
+    if (id is int) return id;
+    return int.tryParse(id?.toString() ?? "");
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+    final up = context.watch<UserProvider>();
+    final tp = context.watch<TeamProvider>();
+    final user = up.viewedUser;
+
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: C.bg,
+        body: const Center(
+          child: CircularProgressIndicator(color: C.green),
+        ),
+      );
+    }
+
+    final profile = user["profile"] ?? {};
+    final skills = user["skills"] ?? [];
+    final skillNames = skills is List
+        ? skills.map((s) => s["name"]?.toString() ?? "").where((s) => s.isNotEmpty).toList()
+        : <String>[];
+
+    final pfp = profile["pfp_path"]?.toString() ?? "";
+    final imageUrl = pfp.isNotEmpty ? "http://192.168.100.11:8000$pfp" : "";
 
     return Scaffold(
       backgroundColor: C.bg,
@@ -28,7 +71,6 @@ class UserProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 children: [
                   GestureDetector(
@@ -46,7 +88,7 @@ class UserProfileScreen extends StatelessWidget {
                           Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                         ),
                     child: Text(
-                      "Ahmed",
+                      user["username"]?.toString() ?? "",
                       style: GoogleFonts.dmSans(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -58,7 +100,6 @@ class UserProfileScreen extends StatelessWidget {
               ),
               SizedBox(height: height * 0.04),
 
-              // Step Capsules
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -77,7 +118,6 @@ class UserProfileScreen extends StatelessWidget {
               ),
               SizedBox(height: height * 0.03),
 
-              // Form Container
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -88,7 +128,6 @@ class UserProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Personal Section
                     sectionHeading(context: context, text: "Personal"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(context: context, text: "Vibe, Intro⚡"),
@@ -99,53 +138,86 @@ class UserProfileScreen extends StatelessWidget {
                         height: 90,
                         decoration: BoxDecoration(
                           color: C.surface,
-                          borderRadius: BorderRadius.circular(45), // circular
+                          borderRadius: BorderRadius.circular(45),
                           border: Border.all(color: C.border),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(45),
-                          child: ValueListenableBuilder<File?>(
-                            valueListenable: selectedImage,
-                            builder: (context, file, _) {
-                              return file != null
-                                  ? Image.file(file, width: 90, height: 90, fit: BoxFit.cover)
-                                  : Center(
-                                child: Icon(
-                                  Icons.person, // fallback icon
-                                  color: C.green,
-                                  size: 40,
+                          child: imageUrl.isNotEmpty
+                              ? Image.network(
+                                  imageUrl,
+                                  width: 90,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Center(
+                                    child: Icon(
+                                      Icons.person,
+                                      color: C.green,
+                                      size: 40,
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    color: C.green,
+                                    size: 40,
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
                         ),
                       ),
                     ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "Ahmed", labelText: "Name"),
+                    customDataContainer(
+                      data: user["username"]?.toString() ?? "",
+                      labelText: "Name",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "ahmed@gmail.com", labelText: "Email"),
+                    customDataContainer(
+                      data: user["email"]?.toString() ?? "",
+                      labelText: "Email",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "I am a student", labelText: "About"),
+                    customDataContainer(
+                      data: profile["about"]?.toString() ?? "",
+                      labelText: "About",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "Male", labelText: "Gender"),
+                    customDataContainer(
+                      data: profile["gender"]?.toString() ?? "",
+                      labelText: "Gender",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "Leader", labelText: "Role"),
+                    customDataContainer(
+                      data: profile["role"]?.toString() ?? "",
+                      labelText: "Role",
+                    ),
                     SizedBox(height: height * 0.02),
                     spacer(),
 
-                    // Academic Section
                     sectionHeading(context: context, text: "Academic"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(context: context, text: "Academic saga, in brief✨"),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "Semester 1", labelText: "Semester"),
+                    customDataContainer(
+                      data: profile["semester"]?.toString() ?? "",
+                      labelText: "Semester",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "BSSE", labelText: "Class"),
+                    customDataContainer(
+                      data: profile["class_name"]?.toString() ?? "",
+                      labelText: "Class",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "Morning", labelText: "Program"),
+                    customDataContainer(
+                      data: profile["program"]?.toString() ?? "",
+                      labelText: "Program",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "A", labelText: "Section"),
+                    customDataContainer(
+                      data: profile["section"]?.toString() ?? "",
+                      labelText: "Section",
+                    ),
                     SizedBox(height: height * 0.03),
                     spacer(),
 
@@ -155,10 +227,12 @@ class UserProfileScreen extends StatelessWidget {
                     SizedBox(height: height * 0.01),
                     Wrap(
                       spacing: width * 0.02,
-                      children: skills.map((skill) {
+                      children: skillNames.map((skill) {
                         return Container(
                           padding: EdgeInsets.symmetric(
-                              horizontal: width * 0.03, vertical: height * 0.008),
+                            horizontal: width * 0.03,
+                            vertical: height * 0.008,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(width * 0.025),
@@ -177,57 +251,146 @@ class UserProfileScreen extends StatelessWidget {
                     SizedBox(height: height * 0.03),
                     spacer(),
 
-                    // Domain & Experience Section
                     sectionHeading(context: context, text: "Domain & Experience"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(context: context, text: "Hustle in a nutshell🚀"),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "FrontEnd Dev", labelText: "Domain"),
+                    customDataContainer(
+                      data: profile["domain"]?.toString() ?? "",
+                      labelText: "Domain",
+                    ),
                     SizedBox(height: height * 0.01),
-                    customDataContainer(data: "Intermediate", labelText: "Experience"),
+                    customDataContainer(
+                      data: profile["experience"]?.toString() ?? "",
+                      labelText: "Experience",
+                    ),
                     SizedBox(height: height * 0.02),
                     spacer(),
 
-                    // Links Section
                     sectionHeading(context: context, text: "Links"),
                     SizedBox(height: height * 0.001),
                     sectionSubHeading(context: context, text: "Links that scream ‘look at me!🌟"),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "https://linkedin.com", labelText: "LinkedIn"),
+                    customDataContainer(
+                      data: profile["linked_in_link"]?.toString() ?? "",
+                      labelText: "LinkedIn",
+                    ),
                     SizedBox(height: height * 0.03),
-                    customDataContainer(data: "https://github.com", labelText: "Github"),
+                    customDataContainer(
+                      data: profile["github_link"]?.toString() ?? "",
+                      labelText: "Github",
+                    ),
                     SizedBox(height: height * 0.02),
-                    customDataContainer(data: "https://portfolio.com", labelText: "Portfolio"),
+                    customDataContainer(
+                      data: profile["portfolio_link"]?.toString() ?? "",
+                      labelText: "Portfolio",
+                    ),
                     SizedBox(height: height * 0.03),
 
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: C.green,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          "Invite To Team",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: height * 0.017,
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildMemberButton(context, up, tp, user, height),
                   ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMemberButton(
+    BuildContext context,
+    UserProvider up,
+    TeamProvider tp,
+    Map<String, dynamic> user,
+    double height,
+  ) {
+    final viewedId = _userId(user);
+    if (viewedId == null || viewedId == up.currentUserId) {
+      return const SizedBox.shrink();
+    }
+
+    if (tp.isMyTeamLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: CircularProgressIndicator(color: C.green, strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (tp.myTeam == null) {
+      return Text(
+        "Only team leader can add members",
+        textAlign: TextAlign.center,
+        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      );
+    }
+
+    if (!tp.isCurrentUserTeamLeader(up.currentUserId)) {
+      return Text(
+        "Only team leader can add members",
+        textAlign: TextAlign.center,
+        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      );
+    }
+
+    if (!tp.hasTeamSpace()) {
+      return Text(
+        "Team is full, cannot add members",
+        textAlign: TextAlign.center,
+        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: C.green,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        onPressed: tp.isLoading
+            ? null
+            : () async {
+                final teamId = _teamId(tp.myTeam!);
+                if (teamId == null) return;
+
+                final result = await tp.addTeamMember(
+                  teamId: teamId,
+                  memId: viewedId,
+                );
+
+                if (!context.mounted) return;
+
+                customColoredBox(
+                  context,
+                  result["message"]?.toString() ??
+                      (result["success"] == true
+                          ? "Member added successfully"
+                          : "Failed to add member"),
+                );
+              },
+        child: tp.isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                "Add Member",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: height * 0.017,
+                ),
+              ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/my_team_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
+import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,81 +22,37 @@ class  BrowseProfileScreen extends StatefulWidget {
 
 class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
   final TextEditingController searchController = TextEditingController();
+  late FocusNode searchFocusNode;
+  @override
+  void initState() {
+    super.initState();
+    searchFocusNode = FocusNode();
 
-  final List<String> semesterOptions = [
-    "Semester",
-    "Semester 1",
-    "Semester 2",
-    "Semester 3",
-    "Semester 4",
-    "Semester 5",
-    "Semester 6",
-    "Semester 7",
-    "Semester 8",
-  ];
-  final List<String> classOptions = ["Class", "BSCS", "BSSE", "BSAI"];
-  final List<String> programOptions = ["Program", "Evening", "Morning"];
-  List<Profile> profiles = [
-    Profile(
-      name: "Alisha M.",
-      role: "Computer Science",
-      semester: "7th Semester",
-      domain: "Data Science",
-      imageUrl: "https://randomuser.me/api/portraits/women/44.jpg",
-      skills: ["Python", "AWS", "React"],
-    ),
-    Profile(
-      name: "Ali Raza",
-      role: "Software Engineering",
-      semester: "5th Semester",
-      domain: "Flutter",
-      imageUrl: "https://randomuser.me/api/portraits/men/32.jpg",
-      skills: ["Flutter", "Firebase", "Dart"],
-    ),
-    Profile(
-      name: "Sara Khan",
-      role: "Information Technology",
-      semester: "6th Semester",
-      domain: "Web Dev",
-      imageUrl: "https://randomuser.me/api/portraits/women/68.jpg",
-      skills: ["HTML", "CSS", "JavaScript"],
-    ),
-    Profile(
-      name: "Usman Tariq",
-      role: "Computer Science",
-      semester: "8th Semester",
-      domain: "AI/ML",
-      imageUrl: "https://randomuser.me/api/portraits/men/75.jpg",
-      skills: ["TensorFlow", "PyTorch", "Python"],
-    ),
-    Profile(
-      name: "Hina Sheikh",
-      role: "Software Engineering",
-      semester: "4th Semester",
-      domain: "UI/UX",
-      imageUrl: "https://randomuser.me/api/portraits/women/21.jpg",
-      skills: ["Figma", "Adobe XD", "Prototyping"],
-    ),
-    Profile(
-      name: "Bilal Ahmed",
-      role: "Computer Science",
-      semester: "3rd Semester",
-      domain: "Cyber Security",
-      imageUrl: "https://randomuser.me/api/portraits/men/11.jpg",
-      skills: ["Networking", "Ethical Hacking", "Linux"],
-    ),
-  ];
-
-  final ValueNotifier<String> selectedSemester = ValueNotifier("Semester");
-  final ValueNotifier<String> selectedClass = ValueNotifier("Class");
-  final ValueNotifier<String> selectedProgram = ValueNotifier("Program");
+    Future.microtask(() async {
+      if (!mounted) return;
+      final up = context.read<UserProvider>();
+      if (up.drawerUserName.isEmpty) {
+        await up.loadCachedUserFromPrefs();
+      }
+      if (!mounted) return;
+      await up.loadCurrentUser(silent: up.drawerUserName.isNotEmpty);
+      if (!mounted) return;
+      await up.loadAllUsers();
+    });
+  }
+  @override
+  void dispose() {
+    searchFocusNode.dispose();
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final up = context.watch<UserProvider>();
-
+    final ap = context.read<AuthProvider>();
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
@@ -138,12 +95,13 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(colors: [C.green, C.cyan]),
                         ),
-                        child: CircleAvatar(
+                        child: (up.selectedImage == null && up.currentImageUrl == null)
+                            ? CircleAvatar(
                           radius: 22,
                           backgroundColor: C.bg,
                           child: Icon(
@@ -151,39 +109,86 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                             color: C.green,
                             size: 32,
                           ),
-                        ),
+                        )
+                            : CircleAvatar(
+                          radius: 25,
+                          backgroundColor: C.surface,
+                          child: ClipOval(
+                            child: up.selectedImage != null
+                                ? Image.file(
+                              up.selectedImage!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            )
+                                : Image.network(
+                              up.currentImageUrl!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Text(
-                          "Ahmed", // dummy username
-                          style: GoogleFonts.spaceMono(
-                            color: C.green,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              up.drawerUserName.isNotEmpty
+                                  ? up.drawerUserName
+                                  : "User",
+                              style: GoogleFonts.spaceMono(
+                                color: C.green,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              up.drawerUserDomain.isNotEmpty
+                                  ? up.drawerUserDomain
+                                  : "—",
+                              style: GoogleFonts.spaceMono(
+                                color: C.cyan.withOpacity(0.7),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // Drawer Items
-                drawerItem(Icons.login, "Login", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginScreen()));
-                }),
                 drawerItem(Icons.app_registration, "Create Team", () {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateTeamScreen()));
                 }),
-                drawerItem(Icons.person, "Create Profile", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateProfileScreen()));
+                drawerItem(Icons.person, "My Profile", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateProfileScreen()),
+                  ).then((_) async {
+                    if (!mounted) return;
+                    await context.read<UserProvider>().refreshBrowseData();
+                  });
                 }),
                 drawerItem(Icons.people, "My Team", () {
                   Navigator.push(context, MaterialPageRoute(builder: (context)=>MyTeamScreen()));
                 }),
-                drawerItem(Icons.logout_outlined, "Logout", () {}),
+                drawerItem(Icons.logout_outlined, "Logout", () {
+                  ap.logout(context);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                        (route) => false,
+                  );
+                }),
                 spacer(),
 
                 // Help & Policy
@@ -194,57 +199,163 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
             ),
           ),
         ),
-      body: SafeArea(
+      body: up.isLoading
+          ? Center(
+        child: CircularProgressIndicator(
+          color: C.green,
+        ),
+      )
+
+          : SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
+
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+
             children: [
-              SizedBox(height: height*0.01,),
+
+              SizedBox(height: height * 0.01),
               TextField(
                 controller: searchController,
-                focusNode: FocusNode(),
-                style: TextStyle(color: C.textPrimary),
+
+                onChanged: (value) {
+                  up.setSearchQuery(value);
+                },
+                focusNode: searchFocusNode,
+                style: TextStyle(
+                  color: C.textPrimary,
+                ),
                 cursorColor: C.green,
                 decoration: InputDecoration(
                   hintText: "Search by name or domain",
-                  prefixIcon: Icon(Icons.search,color: C.textPrimary,),
-                  hintStyle: TextStyle(color: C.textLabel),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: C.textPrimary,
+                  ),
+                  hintStyle: TextStyle(
+                    color: C.textLabel,
+                  ),
                   filled: true,
                   fillColor: C.surface,
+
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: C.border),
+                    borderRadius:
+                    BorderRadius.circular(12),
+
+                    borderSide: BorderSide(
+                      color: C.border,
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: C.borderFocus, width: 1.5),
+
+                  focusedBorder:
+                  OutlineInputBorder(
+                    borderRadius:
+                    BorderRadius.circular(12),
+
+                    borderSide: BorderSide(
+                      color: C.borderFocus,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
-              SizedBox(height: height*0.02,),
-              buildDropdownRow3(
-                value1: up.selectedClass,
-                options1: up.classOptions,
-                onChanged1: up.setClass,
 
-                value2: up.selectedProgram,
-                options2: up.programOptions,
-                onChanged2: up.setProgram,
+              SizedBox(height: height * 0.02),
 
-                value3: up.selectedSemester,
-                options3: up.semesterOptions,
-                onChanged3: up.setSemester,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
 
-                spacing: width * 0.02,
+                  Row(
+                    children: [
+                      SizedBox(width: width * 0.02),
+                      Expanded(
+                        child: Text(
+                          "Class",
+                          style: GoogleFonts.dmSans(
+                            color: C.textLabel,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: width * 0.03),
+
+                      Expanded(
+                        child: Text(
+                          "Program",
+                          style: GoogleFonts.dmSans(
+                            color: C.textLabel,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: width * 0.03),
+
+                      Expanded(
+                        child: Text(
+                          "Semester",
+                          style: GoogleFonts.dmSans(
+                            color: C.textLabel,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: height * 0.008),
+
+                  buildDropdownRow3(
+
+                    value1: up.filterClass,
+                    options1: up.classOptions,
+                    onChanged1: up.setFilterClass,
+
+                    value2: up.filterProgram,
+                    options2: up.programOptions,
+                    onChanged2: up.setFilterProgram,
+
+                    value3: up.filterSemester,
+                    options3: up.semesterOptions,
+                    onChanged3: up.setFilterSemester,
+
+                    spacing: width * 0.02,
+                    forceOpenDownward: true,
+                  ),
+                ],
               ),
-              SizedBox(height: height*0.02,),
               ListView.builder(
-                itemCount: profiles.length,
+                itemCount: up.filteredUsers.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
-                  return profileCard(context,profiles[index]);
+                  final user = up.filteredUsers[index];
+                  final profile = user["profile"] ?? {};
+                  final skills = user["skills"] ?? [];
+                  final imagePath = profile["pfp_path"];
+                  final imageUrl =
+                  imagePath != null
+                      ? "http://192.168.100.11:8000$imagePath"
+                      : "";
+                  return profileCard(
+                    context,
+                    Profile(
+                      name: user["username"] ?? "",
+                      role: profile["class_name"] ?? "",
+                      semester: profile["semester"] ?? "",
+                      domain: profile["domain"] ?? "",
+                      imageUrl: imageUrl,
+                      skills: List<String>.from(
+                        skills.map(
+                                (s) => s["name"]),
+                      ),
+                    ),
+                    user,
+                  );
                 },
               )
             ],
@@ -252,5 +363,6 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
         ),
       ),
     );
+
+    }
   }
-}

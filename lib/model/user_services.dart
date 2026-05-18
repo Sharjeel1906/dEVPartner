@@ -58,8 +58,11 @@ class UserServices {
         "portfolio_link": portfolio,
       });
 
+      // In updateUser() in user_services.dart — replace skills loop with:
       for (final skill in skills) {
-        request.fields["skills"] = skill;
+        request.files.add(
+          http.MultipartFile.fromString("skills", skill),
+        );
       }
 
       // files
@@ -113,6 +116,23 @@ class UserServices {
         return jsonDecode(await response.stream.bytesToString());
       }
 
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  Future<dynamic> getCurrentUserDetail() async {
+    try {
+      final request = http.Request(
+        "GET",
+        Uri.parse("${ApiClient.baseUrl}/current_user_detail/"),
+      );
+
+      final response = await _client.sendRequest(request);
+      if (response.statusCode == 200) {
+        return jsonDecode(await response.stream.bytesToString());
+
+      }
       return null;
     } catch (e) {
       return null;

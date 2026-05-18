@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -198,7 +198,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       if (currentIndex == data.length - 1)
                         Column(
                           children: [
-                            _buildGradientButton("Sign Up", () {
+                            _buildGradientButton("Sign Up", () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setBool("onboarding_completed", true);
+                              if (!context.mounted) return;
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -206,7 +209,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               );
                             }, w, h),
                             SizedBox(height: h * 0.015),
-                            _buildGradientButton("Login", () {
+                            _buildGradientButton("Login", () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setBool("onboarding_completed", true);
+                              if (!context.mounted) return;
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(

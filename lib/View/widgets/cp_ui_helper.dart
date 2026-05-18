@@ -118,6 +118,7 @@ Widget buildDropdown({
   required String value,
   required List<String> options,
   required Function(String) onChanged,
+  bool forceOpenDownward = false,
 }) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -131,6 +132,11 @@ Widget buildDropdown({
         value: value,
         isExpanded: true,
         dropdownColor: C.bg,
+        isDense: forceOpenDownward,
+        menuMaxHeight: forceOpenDownward ? 200 : null,
+        alignment: forceOpenDownward
+            ? AlignmentDirectional.bottomStart
+            : AlignmentDirectional.centerStart,
         icon: Icon(Icons.arrow_drop_down, color: C.textPrimary),
         items: options.map((option) {
           return DropdownMenuItem(
@@ -206,6 +212,7 @@ Widget buildDropdownRow3({
   required Function(String) onChanged3,
 
   required double spacing,
+  bool forceOpenDownward = false,
 }) {
   return Row(
     children: [
@@ -214,6 +221,7 @@ Widget buildDropdownRow3({
           value: value1,
           options: options1,
           onChanged: onChanged1,
+          forceOpenDownward: forceOpenDownward,
         ),
       ),
 
@@ -224,6 +232,7 @@ Widget buildDropdownRow3({
           value: value2,
           options: options2,
           onChanged: onChanged2,
+          forceOpenDownward: forceOpenDownward,
         ),
       ),
 
@@ -234,6 +243,7 @@ Widget buildDropdownRow3({
           value: value3,
           options: options3,
           onChanged: onChanged3,
+          forceOpenDownward: forceOpenDownward,
         ),
       ),
     ],
