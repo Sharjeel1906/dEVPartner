@@ -14,6 +14,7 @@ class TeamProvider extends ChangeNotifier {
   String teamsSearchQuery = "";
   Map<String, dynamic>? teamSummary;
   Map<String, dynamic>? teamDetails;
+  bool get isInTeam => myTeam != null;
 
   static int _parseInt(dynamic value, [int fallback = 0]) {
     if (value is int) return value;
@@ -148,22 +149,56 @@ class TeamProvider extends ChangeNotifier {
   }
   final Map<String, TextEditingController> team_controllers = {
     "teamName": TextEditingController(),
+    "description":TextEditingController(),
     "projectDomain": TextEditingController(),
     "role": TextEditingController(),
   };
 
   final Map<String, FocusNode> team_focus = {
     "teamName": FocusNode(),
+    "description":FocusNode(),
     "projectDomain": FocusNode(),
     "role": FocusNode(),
   };
 
   final List<String> domainOptions = [
     "Select project domain...",
+
+    // Software & Development
     "AI/ML",
     "Web Development",
     "Mobile App",
+    "Desktop Application",
+    "Game Development",
     "Blockchain",
+    "Cloud Computing",
+    "Cybersecurity",
+    "DevOps",
+    "Embedded Systems",
+    "IoT",
+    "AR/VR",
+    "Software Engineering",
+    "API Development",
+    "Database Systems",
+
+    // Data & Intelligence
+    "Data Science",
+    "Big Data",
+    "Computer Vision",
+    "Natural Language Processing",
+    "Robotics",
+    "Automation",
+
+    // Business & Management
+    "FinTech",
+    "EdTech",
+    "HealthTech",
+    "E-Commerce",
+    "ERP Systems",
+    "CRM Systems",
+    "Digital Marketing",
+    "Business Analytics",
+
   ];
 
   String selectedDomain = "Select project domain...";
@@ -224,6 +259,7 @@ class TeamProvider extends ChangeNotifier {
 
       final result = await _teamService.createTeam(
         teamName: team_controllers["teamName"]!.text.trim(),
+        team_description: team_controllers["description"]!.text.trim(),
         projectDomain: selectedDomain,
         reqRole: selectedRoles,
         teamSize: teamSize,
@@ -334,8 +370,11 @@ class TeamProvider extends ChangeNotifier {
       }
 
       allTeams = unique;
-      teamSummary = result["summary"];
+      teamSummary = result["summary"] != null
+          ? Map<String, dynamic>.from(result["summary"])
+          : null;
       applyTeamsFilter();
+      notifyListeners();
 
     } finally {
       isLoading = false;

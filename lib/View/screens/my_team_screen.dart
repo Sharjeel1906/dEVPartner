@@ -57,8 +57,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       body: tp.isMyTeamLoading
           ? const Center(child: CircularProgressIndicator())
           : tp.myTeam != null
-          ? buildTeamView(w, h, context, tp.myTeam!)
-          : buildEmptyState(w, h, context),
+            ? buildTeamView(w, h, context, tp.myTeam!)
+            : buildEmptyState(w, h, context),
     );
   }
 }

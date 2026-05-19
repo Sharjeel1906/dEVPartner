@@ -7,6 +7,8 @@ class Project {
   final int spotsLeft;
   final int totalSpots;
   final String timeAgo;
+  final String? leaderEmail;
+  final String leaderName;
 
   Project({
     required this.category,
@@ -17,5 +19,8 @@ class Project {
     required this.spotsLeft,
     required this.totalSpots,
     required this.timeAgo,
+    required this.leaderEmail,
+    required this.leaderName,
+
   });
 }

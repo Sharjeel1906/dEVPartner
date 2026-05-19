@@ -87,7 +87,11 @@ Widget buildTeamView(
   final members = TeamProvider.parseMembers(team);
   final memberTotal = TeamProvider.memberCount(team);
   final roles = TeamProvider.parseReqRoles(team["roles"]);
-
+  final memberDomains = members
+      .map((m) => m["domain"]?.toString() ?? "")
+      .where((d) => d.isNotEmpty)
+      .toSet()
+      .toList();
   return SingleChildScrollView(
     physics: const BouncingScrollPhysics(),
     padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.02),
@@ -230,9 +234,8 @@ Widget buildTeamView(
 
         SizedBox(height: h * 0.04),
 
-        /// ECOSYSTEM (STATIC UI KEPT SAME)
         Text(
-          "PROJECT ECOSYSTEM",
+          "TECH ECOSYSTEM",
           style: GoogleFonts.spaceMono(
             color: C.cyan,
             fontWeight: FontWeight.bold,
@@ -253,10 +256,12 @@ Widget buildTeamView(
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: [
-              _techBadge("Flutter", C.cyan),
-              _techBadge("Django", C.green),
-              _techBadge("API", C.pink),
+            children: memberDomains.isNotEmpty
+                ? memberDomains.map<Widget>((domain) {
+              return _techBadge(domain, C.cyan);
+            }).toList()
+                : [
+              _techBadge("No domains added", C.textMuted),
             ],
           ),
         ),

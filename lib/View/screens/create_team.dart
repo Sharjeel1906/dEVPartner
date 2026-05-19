@@ -134,6 +134,14 @@ class CreateTeamScreen extends StatelessWidget {
 
                         spacer(),
 
+                        customTextField(
+                          controller: tp.team_controllers["description"] ?? TextEditingController(),
+                          hintText: "Your team vision in one line",
+                          labelText: "TEAM VISION",
+                          Focusnode: tp.team_focus["description"]!,
+                        ),
+                        spacer(),
+
                         Text(
                           "PROJECT DOMAIN",
                           style: TextStyle(

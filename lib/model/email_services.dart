@@ -14,7 +14,7 @@ class EmailService {
     try {
       final request = http.Request(
         "POST",
-        Uri.parse("${ApiClient.baseUrl}/send_invitation_email/"),
+        Uri.parse("${ApiClient.baseUrl}/send_email/"),
       );
 
       request.headers["Content-Type"] = "application/json";
@@ -46,7 +46,7 @@ class EmailService {
     } catch (e) {
       return {
         "success": false,
-        "message": "Something went wrong",
+        "message": "Something went wrong! Try Again",
       };
     }
   }

@@ -1,6 +1,10 @@
 import 'package:dev_partner/View/models/project.dart';
+import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
+import 'package:dev_partner/model_view/email_provider.dart';
+import 'package:dev_partner/model_view/team_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 
 Widget customizedColumn({
@@ -16,7 +20,6 @@ Widget customizedColumn({
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.center, // 🔥 center looks better
     children: [
-
       SizedBox(height: h * 0.006),
 
       /// Value
@@ -52,6 +55,7 @@ Widget customizedColumn({
     ],
   );
 }
+
 Widget statDivider(BuildContext context) {
   final h = MediaQuery.of(context).size.height;
 
@@ -63,8 +67,11 @@ Widget statDivider(BuildContext context) {
   );
 }
 
-
-Widget projectCard({required BuildContext context, required Project project, required Color accentColor}) {
+Widget projectCard({
+  required BuildContext context,
+  required Project project,
+  required Color accentColor,
+}) {
   final width = MediaQuery.of(context).size.width;
   final height = MediaQuery.of(context).size.height;
 
@@ -82,7 +89,10 @@ Widget projectCard({required BuildContext context, required Project project, req
         Row(
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.005),
+              padding: EdgeInsets.symmetric(
+                horizontal: width * 0.025,
+                vertical: height * 0.005,
+              ),
               decoration: BoxDecoration(
                 color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(width * 0.05),
@@ -98,7 +108,10 @@ Widget projectCard({required BuildContext context, required Project project, req
             ),
             SizedBox(width: width * 0.02),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.005),
+              padding: EdgeInsets.symmetric(
+                horizontal: width * 0.025,
+                vertical: height * 0.005,
+              ),
               decoration: BoxDecoration(
                 color: C.green.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(width * 0.05),
@@ -131,10 +144,7 @@ Widget projectCard({required BuildContext context, required Project project, req
         /// Description
         Text(
           project.description,
-          style: TextStyle(
-            color: C.textMuted,
-            fontSize: width * 0.032,
-          ),
+          style: TextStyle(color: C.textMuted, fontSize: width * 0.032),
         ),
 
         SizedBox(height: height * 0.015),
@@ -153,7 +163,10 @@ Widget projectCard({required BuildContext context, required Project project, req
           runSpacing: height * 0.008,
           children: project.role.map((role) {
             return Container(
-              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.008),
+              padding: EdgeInsets.symmetric(
+                horizontal: width * 0.025,
+                vertical: height * 0.008,
+              ),
               decoration: BoxDecoration(
                 color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(width * 0.025),
@@ -176,7 +189,7 @@ Widget projectCard({required BuildContext context, required Project project, req
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "${project.spotsLeft-1} spots left",
+              "${project.spotsLeft - 1} spots left",
               style: GoogleFonts.spaceMono(
                 color: C.textMuted,
                 fontSize: width * 0.03,
@@ -192,28 +205,70 @@ Widget projectCard({required BuildContext context, required Project project, req
           ],
         ),
 
-        SizedBox(height: height * 0.015),
-
-        /// Button
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: height * 0.015),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [accentColor, accentColor.withOpacity(0.7)],
-            ),
-            borderRadius: BorderRadius.circular(width * 0.03),
-          ),
-          child: Center(
-            child: Text(
-              "Request to Join FYP →",
-              style: GoogleFonts.spaceMono(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: width * 0.035,
+        SizedBox(height: height * 0.010),
+        Consumer<EmailProvider>(
+          builder: (context, emailProvider, _) {
+            return Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [accentColor, accentColor.withOpacity(0.7)],
+                ),
+                borderRadius: BorderRadius.circular(width * 0.03),
               ),
-            ),
-          ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(width * 0.03),
+                  onTap: emailProvider.isLoading
+                      ? null
+                      : () async {
+                    final tp = context.read<TeamProvider>();
+
+                    if (tp.isInTeam) {
+                      customColoredBox(context, "You are already in the team");
+                      return;
+                    }
+
+                    final leaderEmail = project.leaderEmail;
+                    final leaderName = project.leaderName;
+                    if (leaderEmail == null) return;
+
+                    final result = await emailProvider.sendInvitationEmail(
+                      recipientEmail: leaderEmail,
+                      recipientName: leaderName,
+                    );
+
+                    if (context.mounted) {
+                      customColoredBox(context, result["message"] ?? "Done");
+                    }
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: height * 0.015),
+                    child: Center(
+                      child: emailProvider.isLoading
+                          ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : Text(
+                        "Request to Join FYP →",
+                        style: GoogleFonts.spaceMono(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: width * 0.035,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     ),

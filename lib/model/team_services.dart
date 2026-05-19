@@ -46,6 +46,7 @@ class TeamService {
   // ================= CREATE TEAM =================
   Future<Map<String, dynamic>> createTeam({
     required String teamName,
+    required String team_description,
     required String projectDomain,
     required List<String> reqRole,
     required int teamSize,
@@ -60,6 +61,7 @@ class TeamService {
 
       request.body = jsonEncode({
         "team_name": teamName,
+        "team_description":team_description,
         "project_domain": projectDomain,
         "req_role": reqRole,
         "team_size": teamSize,
