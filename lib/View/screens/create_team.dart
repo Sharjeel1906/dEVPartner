@@ -149,35 +149,6 @@ class CreateTeamScreen extends StatelessWidget {
                           onChanged: tp.setDomain,
                         ),
 
-                        spacer(),
-
-                        Text(
-                          "REQUIRED SKILLS",
-                          style: TextStyle(
-                            color: C.textLabel,
-                            fontSize: w * 0.032,
-                          ),
-                        ),
-                        SizedBox(height: h * 0.005),
-
-                        TextField(
-                          controller: tp.team_controllers["skill"],
-                          focusNode: tp.team_focus["skill"],
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: "Type skill and press Enter...",
-                            filled: true,
-                            fillColor: C.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: C.border),
-                            ),
-                          ),
-                          onSubmitted: (val) {
-                            tp.addSkill(val);
-                            tp.team_controllers["skill"]!.clear();
-                          },
-                        ),
                         SizedBox(height: h * 0.005),
                         Wrap(
                           spacing: 8,
@@ -234,7 +205,7 @@ class CreateTeamScreen extends StatelessWidget {
                         spacer(),
 
                         Text(
-                          "REQ TEAM SIZE",
+                          "TEAM SIZE",
                           style: TextStyle(
                             color: C.textLabel,
                             fontSize: w * 0.032,
@@ -269,7 +240,7 @@ class CreateTeamScreen extends StatelessWidget {
                                         ),
                                       ),
                                       Text(
-                                        "Required members",
+                                        "Members",
                                         style: TextStyle(
                                           color: C.textMuted,
                                           fontSize: w * 0.025,

@@ -241,31 +241,6 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // Future<dynamic> getUser(int userId) async {
-  //   try {
-  //     isLoading = true;
-  //     notifyListeners();
-  //
-  //     final result = await _userService.getUser(userId);
-  //     return result;
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
-
-  // Future<dynamic> getCurrentUser() async {
-  //   try {
-  //     isLoading = true;
-  //     notifyListeners();
-  //     final result = await _userService.getCurrentUserDetail();
-  //     return result;
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
-
   Future<void> loadAllUsers() async {
     try {
       isLoading = true;
@@ -298,12 +273,9 @@ class UserProvider extends ChangeNotifier {
     profile_controllers["email"]?.text = user["email"]?.toString() ?? "";
     profile_controllers["about"]?.text = profile["about"]?.toString() ?? "";
     profile_controllers["domain"]?.text = drawerUserDomain;
-    profile_controllers["linkedin"]?.text =
-        profile["linked_in_link"]?.toString() ?? "";
-    profile_controllers["github"]?.text =
-        profile["github_link"]?.toString() ?? "";
-    profile_controllers["portfolio"]?.text =
-        profile["portfolio_link"]?.toString() ?? "";
+    profile_controllers["linkedin"]?.text = profile["linked_in_link"]?.toString() ?? "";
+    profile_controllers["github"]?.text = profile["github_link"]?.toString() ?? "";
+    profile_controllers["portfolio"]?.text = profile["portfolio_link"]?.toString() ?? "";
 
     final g = profile["gender"]?.toString() ?? "";
     final r = profile["role"]?.toString() ?? "";

@@ -7,26 +7,47 @@ class TeamService {
   final ApiClient _client = ApiClient();
 
   // ================= GET ALL TEAMS =================
-  Future<List<dynamic>> getAllTeams() async {
+  Future<Map<String, dynamic>> getAllTeams() async {
     try {
       final request = http.Request(
         "GET",
         Uri.parse("${ApiClient.baseUrl}/teams/"),
       );
+
       final response = await _client.sendPublicRequest(request);
+
       if (response.statusCode == 200) {
-        return jsonDecode(await response.stream.bytesToString());
+        final body = jsonDecode(await response.stream.bytesToString());
+
+        if (body is List) {
+          return {
+            "summary": <String, dynamic>{},
+            "teams": body,
+          };
+        }
+
+        return {
+          "summary": body["summary"] ?? <String, dynamic>{},
+          "teams": body["teams"] ?? body["data"] ?? [],
+        };
       }
-      return [];
+
+      return {
+        "summary": {},
+        "teams": [],
+      };
     } catch (e) {
-      return [];
+      return {
+        "summary": {},
+        "teams": [],
+      };
     }
   }
   // ================= CREATE TEAM =================
   Future<Map<String, dynamic>> createTeam({
     required String teamName,
     required String projectDomain,
-    required String reqRole,
+    required List<String> reqRole,
     required int teamSize,
   }) async {
     try {
@@ -122,7 +143,16 @@ class TeamService {
       final response = await _client.sendRequest(request);
 
       if (response.statusCode == 200) {
-        return jsonDecode(await response.stream.bytesToString());
+        final body = jsonDecode(await response.stream.bytesToString());
+        if (body is Map<String, dynamic>) {
+          if (body["data"] is Map<String, dynamic>) {
+            return body["data"] as Map<String, dynamic>;
+          }
+          if (body["team"] is Map<String, dynamic>) {
+            return body["team"] as Map<String, dynamic>;
+          }
+          return body;
+        }
       }
 
       return null;
@@ -130,6 +160,7 @@ class TeamService {
       return null;
     }
   }
+
   Future<Map<String, dynamic>?> getMyTeam() async {
     try {
       final request = http.Request(

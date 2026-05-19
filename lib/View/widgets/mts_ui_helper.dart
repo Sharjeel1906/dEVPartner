@@ -1,6 +1,7 @@
 import 'package:dev_partner/View/screens/browse_teams.dart';
 import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
+import 'package:dev_partner/model_view/team_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
@@ -83,7 +84,9 @@ Widget buildTeamView(
     BuildContext context,
     Map<String, dynamic> team,
     ) {
-  final members = team["members"] ?? [];
+  final members = TeamProvider.parseMembers(team);
+  final memberTotal = TeamProvider.memberCount(team);
+  final roles = TeamProvider.parseReqRoles(team["roles"]);
 
   return SingleChildScrollView(
     physics: const BouncingScrollPhysics(),
@@ -176,11 +179,8 @@ Widget buildTeamView(
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: (team["req_role"].toString().toUpperCase() ?? "")
-                          .toString()
-                          .split(",")
-                          .where((r) => r.trim().isNotEmpty)
-                          .map((role) => _techBadge(role.trim(), C.cyan))
+                      children: (roles.isNotEmpty ? roles : ["Not specified"])
+                          .map((role) => _techBadge(role.toUpperCase(), C.cyan))
                           .toList(),
                     ),
                     spacer(),
@@ -189,7 +189,7 @@ Widget buildTeamView(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildQuickStat(
-                          "${members.length}",
+                          "$memberTotal/${team["available_team_size"]+memberTotal}",
                           "MEMBERS",
                           C.green,
                         ),
@@ -224,7 +224,7 @@ Widget buildTeamView(
             w,
             m["username"] ?? "User",
             m["mem_role"] ?? "Member",
-            m["mem_role"] == "leader",
+            (m["mem_role"] ?? "").toString().toLowerCase() == "leader",
           );
         }).toList(),
 

@@ -139,38 +139,6 @@ Widget projectCard({required BuildContext context, required Project project, req
 
         SizedBox(height: height * 0.015),
         Text(
-          "Skills needed",
-          style: GoogleFonts.spaceMono(
-            color: C.textMuted,
-            fontSize: width * 0.033,
-          ),
-        ),
-        SizedBox(height: height * 0.012),
-
-        /// Skills
-        Wrap(
-          spacing: width * 0.02,
-          runSpacing: height * 0.008,
-          children: project.skills.map((skill) {
-            return Container(
-              padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.008),
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(width * 0.025),
-              ),
-              child: Text(
-                skill,
-                style: GoogleFonts.spaceMono(
-                  color: C.textPrimary,
-                  fontSize: width * 0.03,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-
-        SizedBox(height: height * 0.012),
-        Text(
           "Open Roles",
           style: GoogleFonts.spaceMono(
             color: C.textMuted,
@@ -183,15 +151,15 @@ Widget projectCard({required BuildContext context, required Project project, req
         Wrap(
           spacing: width * 0.02,
           runSpacing: height * 0.008,
-          children: project.skills.map((skill) {
+          children: project.role.map((role) {
             return Container(
               padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: height * 0.008),
               decoration: BoxDecoration(
-                color: C.surface,
+                color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(width * 0.025),
               ),
               child: Text(
-                skill,
+                role,
                 style: GoogleFonts.spaceMono(
                   color: C.textPrimary,
                   fontSize: width * 0.03,
@@ -208,7 +176,7 @@ Widget projectCard({required BuildContext context, required Project project, req
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "${project.spotsLeft} spots left",
+              "${project.spotsLeft-1} spots left",
               style: GoogleFonts.spaceMono(
                 color: C.textMuted,
                 fontSize: width * 0.03,

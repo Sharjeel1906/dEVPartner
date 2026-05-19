@@ -31,11 +31,9 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
     Future.microtask(() async {
       if (!mounted) return;
       final up = context.read<UserProvider>();
-      if (up.drawerUserName.isEmpty) {
-        await up.loadCachedUserFromPrefs();
-      }
+      await up.loadCachedUserFromPrefs();
       if (!mounted) return;
-      await up.loadCurrentUser(silent: up.drawerUserName.isNotEmpty);
+      await up.loadCurrentUser(silent: true);
       if (!mounted) return;
       await up.loadAllUsers();
     });

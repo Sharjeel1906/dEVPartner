@@ -3,7 +3,7 @@ class Project {
   final String title;
   final String description;
   final List<String> skills;
-  final String role;
+  final List<String> role;
   final int spotsLeft;
   final int totalSpots;
   final String timeAgo;

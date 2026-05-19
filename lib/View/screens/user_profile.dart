@@ -1,3 +1,4 @@
+import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/model_view/team_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -319,29 +320,43 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       );
     }
 
+    if (!tp.canManageMembers(up.currentUserId, up.selectedRole)) {
+      return Text(
+        "Only team leader can add members",
+        textAlign: TextAlign.center,
+        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      );
+    }
+
     if (tp.myTeam == null) {
-      return Text(
-        "Only team leader can add members",
-        textAlign: TextAlign.center,
-        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: C.green,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CreateTeamScreen()),
+            );
+          },
+          child: Text(
+            "Create Team to Add Members",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: height * 0.017,
+            ),
+          ),
+        ),
       );
     }
 
-    if (!tp.isCurrentUserTeamLeader(up.currentUserId)) {
-      return Text(
-        "Only team leader can add members",
-        textAlign: TextAlign.center,
-        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
-      );
-    }
-
-    if (!tp.hasTeamSpace()) {
-      return Text(
-        "Team is full, cannot add members",
-        textAlign: TextAlign.center,
-        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
-      );
-    }
 
     return SizedBox(
       width: double.infinity,
@@ -373,6 +388,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ? "Member added successfully"
                           : "Failed to add member"),
                 );
+
               },
         child: tp.isLoading
             ? SizedBox(
