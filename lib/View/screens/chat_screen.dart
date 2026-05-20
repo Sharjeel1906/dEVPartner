@@ -1,30 +1,64 @@
+import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 
-class ChatScreenUI extends StatelessWidget {
-  const ChatScreenUI({super.key});
+class ChatScreenUI extends StatefulWidget {
+  final int userId;
+  final String name;
+  final String imageUrl;
+  final int currentUserId;
+  const ChatScreenUI({
+    super.key,
+    required this.userId,
+    required this.name,
+    required this.imageUrl,
+    required this.currentUserId
+  });
+
+  @override
+  State<ChatScreenUI> createState() => _ChatScreenUIState();
+}
+
+class _ChatScreenUIState extends State<ChatScreenUI> {
+  final TextEditingController msgController = TextEditingController();
+  late ChatProvider _chatProvider; // 👈 Add this
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _chatProvider = Provider.of<ChatProvider>(context, listen: false); // 👈 Save here
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      _chatProvider.clearMessages();
+      await _chatProvider.getConversationMessages(widget.userId);
+      await _chatProvider.connectSocket(widget.userId, widget.currentUserId);
+    });
+  }
+
+  @override
+  void dispose() {
+    _chatProvider.disconnectSocket(); // 👈 Use saved reference, NOT context.read()
+    msgController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
 
-    final List<Map<String, dynamic>> messages = [
-      {"text": "Hey! How are you?", "isMe": false, "time": "2:30 PM"},
-      {"text": "I'm good, you?", "isMe": true, "time": "2:31 PM"},
-      {
-        "text": "Doing well. Working on Flutter project.",
-        "isMe": false,
-        "time": "2:32 PM",
-      },
-      {"text": "That's great!", "isMe": true, "time": "2:35 PM"},
-      {"text": "Let's meet tomorrow.", "isMe": false, "time": "Yesterday"},
-    ];
-
+    final provider = context.watch<ChatProvider>();
+    final messages = provider.messages;
+    final hasImage = (widget.imageUrl).toString().isNotEmpty;
     return Scaffold(
       backgroundColor: C.bg,
-
       appBar: AppBar(
         backgroundColor: C.bg,
         elevation: 0,
@@ -32,7 +66,6 @@ class ChatScreenUI extends StatelessWidget {
         titleSpacing: 0,
         title: Row(
           children: [
-            /// Avatar with gradient border
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
@@ -41,20 +74,20 @@ class ChatScreenUI extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: width * 0.055,
-                backgroundImage: NetworkImage(
-                  "https://randomuser.me/api/portraits/women/44.jpg",
-                ),
+                backgroundColor: C.surface,
+                backgroundImage: hasImage
+                    ? NetworkImage(widget.imageUrl)
+                    : null,
               ),
             ),
 
             SizedBox(width: width * 0.03),
 
-            /// Name + status
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Alisha M.",
+                  (widget.name.isNotEmpty ? widget.name : "Unknown"),
                   style: GoogleFonts.dmSans(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -63,7 +96,10 @@ class ChatScreenUI extends StatelessWidget {
                 ),
                 Text(
                   "Online",
-                  style: TextStyle(color: C.green, fontSize: width * 0.028),
+                  style: TextStyle(
+                    color: C.green,
+                    fontSize: width * 0.028,
+                  ),
                 ),
               ],
             ),
@@ -73,9 +109,31 @@ class ChatScreenUI extends StatelessWidget {
 
       body: Column(
         children: [
-          /// 💬 CHAT AREA
           Expanded(
-            child: ListView.builder(
+            child: provider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : messages.isEmpty
+            // ✅ Empty state instead of bouncing user away
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat_bubble_outline_rounded,
+                      color: C.textMuted, size: width * 0.15),
+                  SizedBox(height: height * 0.02),
+                  Text(
+                    "No messages yet.\nSay hello!",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.dmSans(
+                      color: C.textMuted,
+                      fontSize: width * 0.038,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
               padding: EdgeInsets.symmetric(
                 horizontal: width * 0.04,
                 vertical: height * 0.02,
@@ -83,32 +141,37 @@ class ChatScreenUI extends StatelessWidget {
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final msg = messages[index];
-                final bool isMe = msg['isMe'] as bool;
-                final String text = msg['text'] as String;
-                final String time = msg['time'] as String;
-
+                final bool isMe = msg['sender_id'] == null
+                    ? false
+                    : msg['sender_id'] == context.read<ChatProvider>().currentUserId;
+                final String text = msg['content'] ?? msg['text'] ?? "";
+                final String time = msg['timestamp'] ?? msg['time'] ?? "";
                 return Align(
                   alignment: isMe
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
                   child: Container(
-                    margin: EdgeInsets.symmetric(vertical: height * 0.006),
+                    margin: EdgeInsets.symmetric(
+                      vertical: height * 0.006,
+                    ),
                     padding: EdgeInsets.symmetric(
                       horizontal: width * 0.045,
                       vertical: height * 0.01,
                     ),
-                    constraints: BoxConstraints(maxWidth: width * 0.72),
-
+                    constraints: BoxConstraints(
+                      maxWidth: width * 0.72,
+                    ),
                     decoration: BoxDecoration(
                       gradient: isMe
                           ? LinearGradient(
-                              colors: [C.green, C.cyan],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
+                        colors: [C.green, C.cyan],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
                           : null,
-                      color: isMe ? null : Colors.white.withOpacity(0.04),
-
+                      color: isMe
+                          ? null
+                          : Colors.white.withOpacity(0.04),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(20),
@@ -119,9 +182,9 @@ class ChatScreenUI extends StatelessWidget {
                             ? Radius.circular(6)
                             : Radius.circular(20),
                       ),
-
-                      border: isMe ? null : Border.all(color: Colors.white10),
-
+                      border: isMe
+                          ? null
+                          : Border.all(color: Colors.white10),
                       boxShadow: [
                         BoxShadow(
                           color: isMe
@@ -132,11 +195,9 @@ class ChatScreenUI extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        /// Message text
                         Text(
                           text,
                           style: TextStyle(
@@ -145,7 +206,6 @@ class ChatScreenUI extends StatelessWidget {
                             height: 1.4,
                           ),
                         ),
-
                         SizedBox(height: height * 0.003),
                         Text(
                           time,
@@ -163,7 +223,6 @@ class ChatScreenUI extends StatelessWidget {
             ),
           ),
 
-          /// ✨ INPUT BAR (PREMIUM STYLE)
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: width * 0.035,
@@ -175,7 +234,6 @@ class ChatScreenUI extends StatelessWidget {
             ),
             child: Row(
               children: [
-                /// Input Field
                 Expanded(
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: width * 0.04),
@@ -185,6 +243,7 @@ class ChatScreenUI extends StatelessWidget {
                       border: Border.all(color: Colors.white12),
                     ),
                     child: TextField(
+                      controller: msgController,
                       style: const TextStyle(color: Colors.white),
                       cursorColor: C.green,
                       decoration: InputDecoration(
@@ -198,7 +257,6 @@ class ChatScreenUI extends StatelessWidget {
 
                 SizedBox(width: width * 0.025),
 
-                /// 🔥 Gradient Send Button with Glow
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -212,7 +270,12 @@ class ChatScreenUI extends StatelessWidget {
                     ],
                   ),
                   child: IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      final text = msgController.text.trim();
+                      if (text.isEmpty) return;
+                      provider.sendMessage(text);
+                      msgController.clear();
+                    },
                     icon: Icon(
                       Icons.send_rounded,
                       color: C.bg,

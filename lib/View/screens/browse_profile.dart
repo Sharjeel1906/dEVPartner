@@ -353,6 +353,7 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                       ),
                     ),
                     user,
+                      up.currentUserId??0,
                   );
                 },
               )

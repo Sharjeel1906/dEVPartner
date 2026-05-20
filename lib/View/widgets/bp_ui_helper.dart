@@ -1,3 +1,4 @@
+import 'package:dev_partner/View/screens/chat_screen.dart';
 import 'package:dev_partner/View/screens/user_profile.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +31,22 @@ Widget drawerItem(IconData icon, String title, VoidCallback onTap) {
     ),
   );
 }
-Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> user) {
-  // MediaQuery values
+
+Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> user,int currentUserId) {
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
+
+  // ✅ Resolve name & image once, used in both card display and navigation
+  final resolvedName = (user["name"] != null && user["name"].toString().isNotEmpty)
+      ? user["name"].toString()
+      : (user["username"] != null && user["username"].toString().isNotEmpty)
+      ? user["username"].toString()
+      : profile.name;
+
+  final resolvedImage =
+  (user["profile_image"] != null && user["profile_image"].toString().isNotEmpty)
+      ? user["profile_image"].toString()
+      : profile.imageUrl;
 
   return Container(
     margin: EdgeInsets.symmetric(vertical: screenHeight * 0.012),
@@ -210,10 +223,19 @@ Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> u
                     SizedBox(width: screenWidth * 0.015),
                     GestureDetector(
                       onTap: () {
+                        print("CLICKED USER ID: ${user["id"]}");
+                        print("CurrentUserId :$currentUserId");
                         context.read<UserProvider>().setViewedUser(user);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => UserProfileScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreenUI(
+                              userId: user["id"],
+                              name: resolvedName,
+                              imageUrl: resolvedImage,
+                              currentUserId:currentUserId ,
+                            ),
+                          ),
                         );
                       },
                       child: Text(
