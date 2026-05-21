@@ -39,16 +39,20 @@ class ChatService {
       final data = jsonDecode(body);
 
       if (response.statusCode == 200) {
-        return data;
+        return data is Map<String, dynamic>
+            ? data
+            : {"messages": data};
+      }
+
+      if (response.statusCode == 401) {
+        return null;
       }
 
       return {
-        "error": data["error"] ?? "Failed to load messages",
+        "error": data is Map ? (data["error"] ?? "Failed to load messages") : "Failed to load messages",
       };
     } catch (e) {
-      return {
-        "error": "Something went wrong",
-      };
+      return null;
     }
   }
 }

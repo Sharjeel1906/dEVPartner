@@ -35,6 +35,17 @@ class AuthService {
         await prefs.setString("refresh_token", data["refresh"]);
         await prefs.setString("user", jsonEncode(data["user"]));
 
+        final user = data["user"];
+        if (user is Map) {
+          final id = user["id"];
+          if (id is int) {
+            await prefs.setInt("user_id", id);
+          } else if (id != null) {
+            final parsed = int.tryParse(id.toString());
+            if (parsed != null) await prefs.setInt("user_id", parsed);
+          }
+        }
+
         return "Logged in successfully";
       }
 
@@ -94,6 +105,7 @@ class AuthService {
     await prefs.remove("access_token");
     await prefs.remove("refresh_token");
     await prefs.remove("user");
+    await prefs.remove("user_id");
     await prefs.setBool("is_logged_in", false);
   }
 

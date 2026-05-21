@@ -40,10 +40,43 @@ class ApiClient {
     }
   }
 
+  http.Request _cloneRequest(http.Request request) {
+    final clone = http.Request(request.method, request.url);
+    clone.headers.addAll(request.headers);
+    clone.bodyBytes = request.bodyBytes;
+    return clone;
+  }
+
+  Future<http.StreamedResponse> _sendWithRetry(
+    http.Request request,
+  ) async {
+    http.Request active = _cloneRequest(request);
+    final token = await _getAccessToken();
+    if (token != null) {
+      active.headers["Authorization"] = "Bearer $token";
+    }
+
+    var response = await active.send();
+
+    if (response.statusCode == 401) {
+      final refreshed = await refreshToken();
+      if (refreshed) {
+        active = _cloneRequest(request);
+        final newToken = await _getAccessToken();
+        if (newToken != null) {
+          active.headers["Authorization"] = "Bearer $newToken";
+        }
+        response = await active.send();
+      }
+    }
+
+    return response;
+  }
+
   // ================= MULTIPART REQUEST (AUTH) =================
   Future<http.StreamedResponse> sendMultipart(
-      http.MultipartRequest request,
-      ) async {
+    http.MultipartRequest request,
+  ) async {
     final token = await _getAccessToken();
 
     if (token != null) {
@@ -52,7 +85,6 @@ class ApiClient {
 
     var response = await request.send();
 
-    // 🔥 AUTO REFRESH ON 401
     if (response.statusCode == 401) {
       final refreshed = await refreshToken();
 
@@ -70,36 +102,15 @@ class ApiClient {
 
   // ================= NORMAL REQUEST (AUTH) =================
   Future<http.StreamedResponse> sendRequest(
-      http.Request request,
-      ) async {
-    final token = await _getAccessToken();
-
-    if (token != null) {
-      request.headers["Authorization"] = "Bearer $token";
-    }
-
-    var response = await request.send();
-
-    // 🔥 AUTO REFRESH ON 401
-    if (response.statusCode == 401) {
-      final refreshed = await refreshToken();
-
-      if (refreshed) {
-        final newToken = await _getAccessToken();
-        if (newToken != null) {
-          request.headers["Authorization"] = "Bearer $newToken";
-        }
-        response = await request.send();
-      }
-    }
-
-    return response;
+    http.Request request,
+  ) async {
+    return _sendWithRetry(request);
   }
 
   // ================= PUBLIC REQUEST (NO AUTH) =================
   Future<http.StreamedResponse> sendPublicRequest(
-      http.Request request,
-      ) async {
+    http.Request request,
+  ) async {
     return await request.send();
   }
 }

@@ -19,8 +19,10 @@ class _InboxScreenState extends State<InboxScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      Provider.of<ChatProvider>(context, listen: false).getAllConversations();
+    Future.microtask(() async {
+      final cp = Provider.of<ChatProvider>(context, listen: false);
+      await cp.initUser();
+      await cp.getAllConversations();
     });
   }
 
@@ -152,7 +154,8 @@ class _InboxScreenState extends State<InboxScreen> {
                       final chat = chats[index];
                       final user = chat["user"] ?? {};
                       final profileImage = user["profile_image"] ?? "";
-                      final name = user["username"] ?? user["name"] ?? "Unknown";
+                      final name =
+                          user["username"] ?? user["name"] ?? "Unknown";
                       final lastMessage = chat["last_message"] ?? "";
 
                       return GestureDetector(
@@ -164,7 +167,8 @@ class _InboxScreenState extends State<InboxScreen> {
                                 userId: user["id"],
                                 name: name,
                                 imageUrl: profileImage,
-                                currentUserId:up.currentUserId??0 ,
+                                currentUserId: up.currentUserId ?? 0,
+                                isOnline: user["is_online"] == true,
                               ),
                             ),
                           );
@@ -252,17 +256,20 @@ class _InboxScreenState extends State<InboxScreen> {
                                       fontSize: width * 0.03,
                                     ),
                                   ),
-                                  if ((chat["unread_count"] ?? 0) > 0)
+                                  if ((chat["unread_count"]) > 0)
                                     Container(
-                                      margin: EdgeInsets.only(top: height * 0.005),
+                                      margin: EdgeInsets.only(
+                                        top: height * 0.005,
+                                      ),
                                       padding: EdgeInsets.symmetric(
                                         horizontal: width * 0.025,
                                         vertical: height * 0.003,
                                       ),
                                       decoration: BoxDecoration(
                                         color: Colors.greenAccent,
-                                        borderRadius:
-                                        BorderRadius.circular(width * 0.03),
+                                        borderRadius: BorderRadius.circular(
+                                          width * 0.03,
+                                        ),
                                       ),
                                       child: Text(
                                         chat["unread_count"].toString(),

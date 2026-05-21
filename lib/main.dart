@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/on_boarding.dart';
+import 'package:dev_partner/model/auth_services.dart';
 import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/email_provider.dart';
@@ -27,6 +28,10 @@ void main() async {
   if (!onboardingCompleted) {
     initialScreen = const OnboardingScreen();
   } else if (isLoggedIn && accessToken != null) {
+    final refresh = prefs.getString("refresh_token");
+    if (refresh != null) {
+      await AuthService().refreshToken();
+    }
     initialScreen = const HomeScreen();
   } else {
     initialScreen = const LoginScreen();
@@ -46,16 +51,10 @@ void main() async {
 }
 
 
-
 class MyApp extends StatelessWidget {
 
   final Widget initialScreen;
-
-
-
   const MyApp({super.key, required this.initialScreen});
-
-
 
   @override
 

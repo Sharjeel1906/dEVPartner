@@ -395,7 +395,7 @@ class TeamProvider extends ChangeNotifier {
   }
 
 
-void clear() {
+  void clear() {
     for (var c in team_controllers.values) {
       c.clear();
     }

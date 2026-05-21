@@ -73,48 +73,48 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
             children: [
               SizedBox(height: height*0.01,),
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: C.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: C.border),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: customizedColumn(
-                        context: context,
-                        icon: Icons.event_available,
-                        title: "Teams 👥",
-                          value: tp.teamSummary?["total_teams"]?.toString() ?? "0"
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: C.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: C.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: customizedColumn(
+                            context: context,
+                            icon: Icons.event_available,
+                            title: "Teams 👥",
+                            value: tp.teamSummary?["total_teams"]?.toString() ?? "0"
 
+                        ),
                       ),
-                    ),
 
-                    statDivider(context),
+                      statDivider(context),
 
-                    Expanded(
-                      child: customizedColumn(
-                        context: context,
-                        icon: Icons.search,
-                        title: "Recruiting 📝",
-                          value: tp.teamSummary?["teams_with_open_spots"]?.toString() ?? "0"
+                      Expanded(
+                        child: customizedColumn(
+                            context: context,
+                            icon: Icons.search,
+                            title: "Recruiting 📝",
+                            value: tp.teamSummary?["teams_with_open_spots"]?.toString() ?? "0"
 
+                        ),
                       ),
-                    ),
 
-                    statDivider(context),
+                      statDivider(context),
 
-                    Expanded(
-                      child: customizedColumn(
-                        context: context,
-                        icon: Icons.people,
-                        title: "Spots 🏆",
-                          value: tp.teamSummary?["total_open_spots"]?.toString() ?? "0"
+                      Expanded(
+                        child: customizedColumn(
+                            context: context,
+                            icon: Icons.people,
+                            title: "Spots 🏆",
+                            value: tp.teamSummary?["total_open_spots"]?.toString() ?? "0"
+                        ),
                       ),
-                    ),
-                  ],
-                )
+                    ],
+                  )
               ),
               SizedBox(height: height*0.02,),
               TextField(
@@ -140,68 +140,68 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
                 ),
               ),
               SizedBox(height: height*0.02,),
-            tp.isLoading
-                ? const Center(
-              child: CircularProgressIndicator(
-                color: C.green,
-              ),
-            )
-                : tp.filteredTeams.isEmpty
-                ? SizedBox(
-              height: height * 0.6,
-              child: buildEmptyState(width, height, context),
-            )
-                : Column(
-              children: tp.filteredTeams.asMap().entries.map((entry) {
-                int index = entry.key;
-                final team = entry.value;
+              tp.isLoading
+                  ? const Center(
+                child: CircularProgressIndicator(
+                  color: C.green,
+                ),
+              )
+                  : tp.filteredTeams.isEmpty
+                  ? SizedBox(
+                height: height * 0.6,
+                child: buildEmptyState(width, height, context),
+              )
+                  : Column(
+                children: tp.filteredTeams.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  final team = entry.value;
 
-                final List<Color> accentColors = [
-                  C.purple,
-                  C.pink,
-                  C.amber,
-                  C.blue,
-                  C.orange,
-                ];
+                  final List<Color> accentColors = [
+                    C.purple,
+                    C.pink,
+                    C.amber,
+                    C.blue,
+                    C.orange,
+                  ];
 
-                final Color color = accentColors[index % accentColors.length];
+                  final Color color = accentColors[index % accentColors.length];
 
-                final int total = TeamProvider.teamTotalSize(team);
-                final int memberTotal = TeamProvider.memberCount(team);
-                final int openSpots = total - memberTotal;
-                final teamId = TeamProvider.teamIdFromMap(team);
-                final roles = TeamProvider.parseReqRoles(team["roles"]);
+                  final int total = TeamProvider.teamTotalSize(team);
+                  final int memberTotal = TeamProvider.memberCount(team);
+                  final int openSpots = total - memberTotal;
+                  final teamId = TeamProvider.teamIdFromMap(team);
+                  final roles = TeamProvider.parseReqRoles(team["roles"]);
 
-                return GestureDetector(
-                  onTap: () {
-                    if (teamId == 0) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => TeamDetailScreen(teamId: teamId),
+                  return GestureDetector(
+                    onTap: () {
+                      if (teamId == 0) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TeamDetailScreen(teamId: teamId),
+                        ),
+                      );
+                    },
+                    child: projectCard(
+                      context: context,
+                      project: Project(
+                        category: team["project_domain"]?.toString() ?? "",
+                        title: team["team_name"]?.toString() ?? "",
+                        description: team["team_description"]?.toString() ??
+                            "Looking for team members",
+                        skills: const [],
+                        role: roles.isNotEmpty ? roles : ["Not specified"],
+                        spotsLeft: ((total+1)-openSpots)+2,
+                        totalSpots: total,
+                        timeAgo: TeamProvider.formatTeamDate(team["created_at"]),
+                        leaderName: team["group_lead_name"]?.toString() ?? "",
+                        leaderEmail: team["group_lead_email"]?.toString(),
                       ),
-                    );
-                  },
-                  child: projectCard(
-                    context: context,
-                    project: Project(
-                      category: team["project_domain"]?.toString() ?? "",
-                      title: team["team_name"]?.toString() ?? "",
-                      description: team["team_description"]?.toString() ??
-                          "Looking for team members",
-                      skills: const [],
-                      role: roles.isNotEmpty ? roles : ["Not specified"],
-                      spotsLeft: ((total+1)-openSpots)+2,
-                      totalSpots: total,
-                      timeAgo: TeamProvider.formatTeamDate(team["created_at"]),
-                      leaderName: team["group_lead_name"]?.toString() ?? "",
-                      leaderEmail: team["group_lead_email"]?.toString(),
+                      accentColor: color,
                     ),
-                    accentColor: color,
-                  ),
-                );
-              }).toList(),
-            )
+                  );
+                }).toList(),
+              )
             ],
           ),
         ),

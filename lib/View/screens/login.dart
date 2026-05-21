@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/model_view/auth_provider.dart';
+import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -166,6 +167,10 @@ class LoginScreen extends StatelessWidget {
                                   );
                                 }
                                 await up.loadCurrentUser(silent: true);
+                                context.read<ChatProvider>().resetSession();
+                                await context.read<ChatProvider>().initUser(
+                                  forceRefresh: true,
+                                );
                                 if (!context.mounted) return;
                                 Navigator.pushReplacement(
                                   context,

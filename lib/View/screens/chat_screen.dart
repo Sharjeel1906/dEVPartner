@@ -9,12 +9,14 @@ class ChatScreenUI extends StatefulWidget {
   final String name;
   final String imageUrl;
   final int currentUserId;
+  final bool isOnline;
   const ChatScreenUI({
     super.key,
     required this.userId,
     required this.name,
     required this.imageUrl,
-    required this.currentUserId
+    required this.currentUserId,
+    this.isOnline = false,
   });
 
   @override
@@ -34,10 +36,15 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      _chatProvider.clearMessages();
-      await _chatProvider.getConversationMessages(widget.userId);
-      await _chatProvider.connectSocket(widget.userId, widget.currentUserId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final cp = Provider.of<ChatProvider>(context, listen: false);
+      await cp.initUser(forceRefresh: true);
+      cp.currentUserId = cp.currentUserId ?? widget.currentUserId;
+      cp.clearMessages();
+      await cp.getConversationMessages(widget.userId);
+      final senderId = cp.currentUserId ?? widget.currentUserId;
+      await cp.connectSocket(widget.userId, senderId);
     });
   }
 
@@ -95,9 +102,9 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                   ),
                 ),
                 Text(
-                  "Online",
+                  widget.isOnline ? "Online" : "Offline",
                   style: TextStyle(
-                    color: C.green,
+                    color: widget.isOnline ? C.green : C.textMuted,
                     fontSize: width * 0.028,
                   ),
                 ),
@@ -141,11 +148,16 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final msg = messages[index];
-                final bool isMe = msg['sender_id'] == null
-                    ? false
-                    : msg['sender_id'] == context.read<ChatProvider>().currentUserId;
-                final String text = msg['content'] ?? msg['text'] ?? "";
-                final String time = msg['timestamp'] ?? msg['time'] ?? "";
+                final myId = widget.currentUserId.toString();
+                final senderId = msg['sender_id'].toString();
+                final bool isMe = senderId == myId;
+                final String text = msg['text'] ?? msg['content'] ?? "";
+                final String time = msg['time'] ?? msg['timestamp'] ?? "";
+                final bool isUnread = !isMe && (msg['is_read'] == false);
+                int unreadCount = messages.where((msg) {
+                  final senderId = int.tryParse(msg['sender_id'].toString()) ?? -1;
+                  return senderId != widget.currentUserId && msg['is_read'] == false;
+                }).length;
                 return Align(
                   alignment: isMe
                       ? Alignment.centerRight
@@ -196,7 +208,9 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: isMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
                       children: [
                         Text(
                           text,

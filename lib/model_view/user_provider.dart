@@ -265,6 +265,12 @@ class UserProvider extends ChangeNotifier {
         ? user["id"] as int
         : int.tryParse(user["id"]?.toString() ?? "");
 
+    if (currentUserId != null) {
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setInt("user_id", currentUserId!);
+      });
+    }
+
     drawerUserName = user["username"]?.toString() ?? "";
     drawerUserDomain =
         profile["domain"]?.toString() ?? user["domain"]?.toString() ?? "";

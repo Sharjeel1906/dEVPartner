@@ -1,3 +1,4 @@
+import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -53,6 +54,7 @@ class AuthProvider extends ChangeNotifier {
       emailFocus.unfocus();
       passwordFocus.unfocus();
       context.read<UserProvider>().resetForm();
+      context.read<ChatProvider>().resetSession();
     } finally {
       isLoading = false;
       notifyListeners();

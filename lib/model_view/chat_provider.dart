@@ -1,8 +1,13 @@
-import 'package:flutter/cupertino.dart';
-import '../model/chat_services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../model/api_client.dart';
+import '../model/chat_services.dart';
+
 class ChatProvider extends ChangeNotifier {
   final ChatService _chatService = ChatService();
   bool isLoading = false;
@@ -12,11 +17,48 @@ class ChatProvider extends ChangeNotifier {
   List<dynamic> messages = [];
   int? currentUserId;
   WebSocketChannel? channel;
+  StreamSubscription? _socketSub;
+
+  int getUnreadCount(int myId) {
+    return messages.where((msg) {
+      final senderId = msg["sender_id"];
+      final isRead = msg["is_read"] == true;
+
+      return senderId != null &&
+          senderId != myId &&
+          isRead == false;
+    }).length;
+  }
+  static int? _parseId(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? "");
+  }
+
+  static bool _sameId(dynamic a, dynamic b) {
+    final idA = _parseId(a);
+    final idB = _parseId(b);
+    return idA != null && idB != null && idA == idB;
+  }
 
   Future<int?> _getCurrentUserId() async {
+    if (currentUserId != null) return currentUserId;
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('user_id'); // adjust key to match your login save
+    final fromPrefs = prefs.getInt("user_id");
+    if (fromPrefs != null) {
+      currentUserId = fromPrefs;
+      return fromPrefs;
+    }
+    final userJson = prefs.getString("user");
+    if (userJson != null) {
+      final user = jsonDecode(userJson) as Map<String, dynamic>;
+      currentUserId = _parseId(user["id"]);
+      if (currentUserId != null) {
+        await prefs.setInt("user_id", currentUserId!);
+      }
+    }
+    return currentUserId;
   }
+
   Future<void> initUser() async {
     currentUserId = await _getCurrentUserId();
     notifyListeners();
@@ -35,43 +77,118 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  String _resolveImageUrl(dynamic path) {
+    final p = path?.toString() ?? "";
+    if (p.isEmpty) return "";
+    if (p.startsWith("http")) return p;
+    return "${ApiClient.baseUrl.replaceAll('/FYP_Partner_Finder', '')}$p";
+  }
+
+  Map<String, dynamic> _mapMessage(Map<String, dynamic> msg, int? myId) {
+    final senderId = _parseId(msg["sender_id"]);
+    return {
+      "id": msg["id"],
+      "sender_id": senderId,
+      "is_me": senderId != null && senderId == myId,
+      "text": msg["content"] ?? msg["text"] ?? "",
+      "time": _formatTime(msg["timestamp"]?.toString()),
+      "is_read": msg["is_read"] ?? false,
+    };
+  }
+
   void clearMessages() {
     messages = [];
     notifyListeners();
+  }
+
+  Map<String, dynamic> _resolveOtherUser(Map<String, dynamic> conv, int? myId) {
+    final user1 = conv["user1"] is Map
+        ? Map<String, dynamic>.from(conv["user1"] as Map)
+        : <String, dynamic>{};
+    final user2 = conv["user2"] is Map
+        ? Map<String, dynamic>.from(conv["user2"] as Map)
+        : <String, dynamic>{};
+
+    Map<String, dynamic> otherUser;
+    if (_sameId(user1["id"], myId)) {
+      otherUser = user2;
+    } else if (_sameId(user2["id"], myId)) {
+      otherUser = user1;
+    } else {
+      otherUser = user2.isNotEmpty ? user2 : user1;
+    }
+
+    if (_sameId(otherUser["id"], myId)) {
+      otherUser = _sameId(user1["id"], myId) ? user2 : user1;
+    }
+
+    return otherUser;
   }
 
   Future<void> getAllConversations() async {
     try {
       isLoading = true;
       notifyListeners();
+
       currentUserId = await _getCurrentUserId();
       final raw = await _chatService.getAllConversations();
-      notifyListeners();
-      conversations = raw.map((conv) {
-        final user1 = conv["user1"] ?? {};
-        final user2 = conv["user2"] ?? {};
-        final otherUser = (user1["id"].toString() == currentUserId.toString()) ? user2 : user1;
-        final resolvedName =
-        (otherUser["name"] != null && otherUser["name"].toString().isNotEmpty)
-            ? otherUser["name"].toString()
-            : (otherUser["username"] ?? "");
 
-        // ✅ Resolve image safely
-        final resolvedImage = otherUser["profile_image"]?.toString() ?? "";
+      conversations = raw
+          .whereType<Map>()
+          .map((conv) {
+            final c = Map<String, dynamic>.from(conv);
+            final otherUser = _resolveOtherUser(c, currentUserId);
 
-        return {
-          "id": conv["id"],
-          "user": {
-            "id": otherUser["id"],
-            "name": resolvedName,
-            "profile_image": resolvedImage,
-            "is_online": otherUser["is_online"] ?? false,
-          },
-          "last_message": "",
-          "time": _formatTime(conv["created_at"]),
-          "unread_count": 0,
-        };
-      }).toList();
+            if (_sameId(otherUser["id"], currentUserId)) {
+              return null;
+            }
+
+            final resolvedName =
+                (otherUser["name"]?.toString().isNotEmpty == true)
+                ? otherUser["name"].toString()
+                : (otherUser["username"] ?? "").toString();
+
+            final lastMsg = c["last_message"];
+            String lastText = "";
+            String? lastTime;
+
+            if (lastMsg is Map) {
+              lastText = (lastMsg["content"] ?? lastMsg["text"] ?? "")
+                  .toString();
+              lastTime = lastMsg["timestamp"]?.toString();
+            } else if (lastMsg is String) {
+              lastText = lastMsg;
+            }
+
+            lastText = lastText.isNotEmpty
+                ? lastText
+                : (c["last_message_text"] ?? c["message_preview"] ?? "")
+                      .toString();
+
+            final timeSource =
+                lastTime ??
+                c["last_message_time"]?.toString() ??
+                c["updated_at"]?.toString() ??
+                c["created_at"]?.toString();
+
+            return {
+              "id": c["id"],
+              "user": {
+                "id": otherUser["id"],
+                "name": resolvedName,
+                "username": otherUser["username"] ?? resolvedName,
+                "profile_image": _resolveImageUrl(
+                  otherUser["profile_image"] ?? otherUser["pfp_path"],
+                ),
+                "is_online": otherUser["is_online"] == true,
+              },
+              "last_message": lastText,
+              "time": _formatTime(timeSource),
+              "unread_count": getUnreadCount(c["id"]),
+            };
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
     } finally {
       isLoading = false;
       notifyListeners();
@@ -83,7 +200,7 @@ class ChatProvider extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      final currentUserId = await _getCurrentUserId();
+      final myId = await _getCurrentUserId();
       final result = await _chatService.getConversationMessages(userId);
 
       if (result == null || result.containsKey("error")) {
@@ -93,55 +210,56 @@ class ChatProvider extends ChangeNotifier {
 
       final raw = result["messages"] as List<dynamic>? ?? [];
 
-      messages = raw.map((msg) {
-        return {
-          "id": msg["id"],
-          "is_me": msg["sender_id"] == currentUserId,
-          "text": msg["content"] ?? "",
-          "time": _formatTime(msg["timestamp"]),
-          "is_read": msg["is_read"] ?? false,
-        };
-      }).toList();
+      messages = raw
+          .map((m) => _mapMessage(Map<String, dynamic>.from(m as Map), myId))
+          .toList();
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
+  void _onSocketMessage(dynamic data, int? myId) {
+    final msg = jsonDecode(data) as Map<String, dynamic>;
+    final mapped = _mapMessage(msg, myId);
+    final msgId = mapped["id"];
 
-  Future<void> connectSocket(int receiverId,int senderId) async {
+    if (msgId != null && messages.any((m) => m["id"] == msgId)) {
+      return;
+    }
+
+    messages.add(mapped);
+    notifyListeners();
+  }
+
+  Future<void> connectSocket(int receiverId, int senderId) async {
+    disconnectSocket();
+
+    final myId = await _getCurrentUserId();
+
     channel = WebSocketChannel.connect(
-      Uri.parse(
-        "ws://192.168.100.11:8000/ws/chat/$senderId/$receiverId/",
-      ),
+      Uri.parse("ws://192.168.100.11:8000/ws/chat/$senderId/$receiverId/"),
     );
-    channel!.stream.listen((data) {
-      final msg = jsonDecode(data);
-      messages.add({
-        "id": msg["id"],
-        "sender_id": msg["sender_id"],
-        "receiver_id": msg["receiver_id"],
-        "content": msg["content"] ?? "",
-        "timestamp": _formatTime(msg["timestamp"]),
-        "is_read": msg["is_read"] ?? false,
-      });
-      notifyListeners();
+
+    _socketSub = channel!.stream.listen((data) {
+      _onSocketMessage(data, myId);
     });
   }
 
   void sendMessage(String text) {
     if (channel == null || text.trim().isEmpty) return;
 
-    channel!.sink.add(
-      jsonEncode({
-        "content": text.trim(),
-      }),
-    );
+    channel!.sink.add(jsonEncode({"content": text.trim()}));
   }
 
+
   void disconnectSocket() {
+    _socketSub?.cancel();
+    _socketSub = null;
     channel?.sink.close();
+    channel = null;
   }
+
   void clear() {
     msgController.clear();
     notifyListeners();
@@ -149,6 +267,7 @@ class ChatProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    disconnectSocket();
     msgController.dispose();
     msgFocus.dispose();
     super.dispose();
