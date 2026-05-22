@@ -481,7 +481,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             : Text(
                 "Remove Member",
                 style: TextStyle(
-                  color: C.pink,
+                  color: C.cyan,
                   fontWeight: FontWeight.bold,
                   fontSize: height * 0.017,
                 ),
