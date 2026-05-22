@@ -2,7 +2,9 @@ import 'package:dev_partner/View/screens/browse_teams.dart';
 import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
 import 'package:dev_partner/model_view/team_provider.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
 
@@ -92,6 +94,19 @@ Widget buildTeamView(
       .where((d) => d.isNotEmpty)
       .toSet()
       .toList();
+
+  final up = context.read<UserProvider>();
+  final currentUserId = up.currentUserId;
+  bool isLeader = false;
+  for (final m in members) {
+    final memId = m["user_id"] ?? m["id"] ?? m["mem_id"];
+    final parsedMemId = memId is int ? memId : int.tryParse(memId?.toString() ?? "");
+    if (parsedMemId != null && currentUserId != null && parsedMemId == currentUserId) {
+      isLeader = (m["mem_role"] ?? "").toString().toLowerCase() == "leader";
+      break;
+    }
+  }
+
   return SingleChildScrollView(
     physics: const BouncingScrollPhysics(),
     padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.02),
@@ -265,6 +280,61 @@ Widget buildTeamView(
             ],
           ),
         ),
+
+        SizedBox(height: h * 0.04),
+
+        if (isLeader) ...[
+          actionButton(
+            w,
+            "Delete Team",
+            C.cyan,
+            Icons.delete_forever,
+            () async {
+              final tp = context.read<TeamProvider>();
+              final teamId = TeamProvider.teamIdFromMap(team);
+              if (teamId == 0) return;
+              final confirmed = await showConfirmDeleteDialog(
+                context,
+                title: "Delete Team",
+                message: "Are you sure you want to permanently delete this team?",
+                confirmLabel: "Delete",
+              );
+              if (!context.mounted || !confirmed) return;
+              final result = await tp.deleteTeam(teamId);
+              if (!context.mounted) return;
+              customColoredBox(
+                context,
+                result["message"]?.toString() ?? "Team deleted successfully",
+              );
+            },
+          ),
+        ] else ...[
+          actionButton(
+            w,
+            "Request to Exit Group",
+            C.cyan,
+            Icons.exit_to_app,
+            () async {
+              final tp = context.read<TeamProvider>();
+              final teamId = TeamProvider.teamIdFromMap(team);
+              if (teamId == 0) return;
+              final confirmed = await showConfirmDeleteDialog(
+                context,
+                title: "Request to Exit Group",
+                message: "Submit a request to leave this team?",
+                confirmLabel: "Request",
+              );
+              if (!context.mounted || !confirmed) return;
+              final result = await tp.requestExitTeam();
+              if (!context.mounted) return;
+              customColoredBox(
+                context,
+                result["message"]?.toString() ?? "Request submitted",
+              );
+            },
+            isOutlined: true,
+          ),
+        ],
 
         SizedBox(height: h * 0.05),
       ],

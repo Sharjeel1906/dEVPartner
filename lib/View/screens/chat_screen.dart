@@ -1,3 +1,4 @@
+import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,7 +26,47 @@ class ChatScreenUI extends StatefulWidget {
 
 class _ChatScreenUIState extends State<ChatScreenUI> {
   final TextEditingController msgController = TextEditingController();
-  late ChatProvider _chatProvider; // 👈 Add this
+  late ChatProvider _chatProvider;
+  bool _selectionMode = false;
+  final Set<int> _selectedMessageIds = {};
+
+  void _clearSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedMessageIds.clear();
+    });
+  }
+
+  void _enterSelection(int messageId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedMessageIds.add(messageId);
+    });
+  }
+
+  void _toggleSelection(int messageId) {
+    setState(() {
+      if (_selectedMessageIds.contains(messageId)) {
+        _selectedMessageIds.remove(messageId);
+        if (_selectedMessageIds.isEmpty) {
+          _selectionMode = false;
+        }
+      } else {
+        _selectedMessageIds.add(messageId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedMessages() async {
+    if (_selectedMessageIds.isEmpty) return;
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      message: "Delete selected messages?",
+    );
+    if (!mounted || !confirmed) return;
+    await _chatProvider.deleteMessages(_selectedMessageIds.toList());
+    _clearSelection();
+  }
 
   @override
   void didChangeDependencies() {
@@ -39,10 +80,11 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final cp = Provider.of<ChatProvider>(context, listen: false);
-      await cp.initUser(forceRefresh: true);
+      await cp.initUser();
       cp.currentUserId = cp.currentUserId ?? widget.currentUserId;
       cp.clearMessages();
       await cp.getConversationMessages(widget.userId);
+      await cp.markConversationAsRead(widget.userId); // ← add this line
       final senderId = cp.currentUserId ?? widget.currentUserId;
       await cp.connectSocket(widget.userId, senderId);
     });
@@ -50,7 +92,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
 
   @override
   void dispose() {
-    _chatProvider.disconnectSocket(); // 👈 Use saved reference, NOT context.read()
+    _chatProvider.disconnectSocket();
     msgController.dispose();
     super.dispose();
   }
@@ -70,6 +112,20 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
         backgroundColor: C.bg,
         elevation: 0,
         iconTheme: IconThemeData(color: C.green),
+        leading: _selectionMode
+            ? IconButton(
+                icon: Icon(Icons.close, color: C.green),
+                onPressed: _clearSelection,
+              )
+            : null,
+        automaticallyImplyLeading: !_selectionMode,
+        actions: [
+          if (_selectionMode && _selectedMessageIds.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: C.green),
+              onPressed: _deleteSelectedMessages,
+            ),
+        ],
         titleSpacing: 0,
         title: Row(
           children: [
@@ -153,16 +209,25 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                 final bool isMe = senderId == myId;
                 final String text = msg['text'] ?? msg['content'] ?? "";
                 final String time = msg['time'] ?? msg['timestamp'] ?? "";
-                final bool isUnread = !isMe && (msg['is_read'] == false);
-                int unreadCount = messages.where((msg) {
-                  final senderId = int.tryParse(msg['sender_id'].toString()) ?? -1;
-                  return senderId != widget.currentUserId && msg['is_read'] == false;
-                }).length;
+                final messageId = msg['id'] is int
+                    ? msg['id'] as int
+                    : int.tryParse(msg['id']?.toString() ?? "");
+                final isSelected = messageId != null &&
+                    _selectedMessageIds.contains(messageId);
                 return Align(
                   alignment: isMe
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
-                  child: Container(
+                  child: GestureDetector(
+                    onLongPress: () {
+                      if (messageId == null) return;
+                      _enterSelection(messageId);
+                    },
+                    onTap: () {
+                      if (!_selectionMode || messageId == null) return;
+                      _toggleSelection(messageId);
+                    },
+                    child: Container(
                     margin: EdgeInsets.symmetric(
                       vertical: height * 0.006,
                     ),
@@ -194,7 +259,12 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                             ? Radius.circular(6)
                             : Radius.circular(20),
                       ),
-                      border: isMe
+                      border: isSelected
+                          ? Border.all(
+                        color: Colors.white,  // ✅ White border is visible on gradient
+                        width: 3,
+                      )
+                          : isMe
                           ? null
                           : Border.all(color: Colors.white10),
                       boxShadow: [
@@ -231,6 +301,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 );
               },

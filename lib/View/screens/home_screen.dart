@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       final cp = context.read<ChatProvider>();
       cp.resetSession();
-      await cp.initUser(forceRefresh: true);
+      await cp.initUser();
       if (!mounted) return;
       context.read<TeamProvider>().getMyTeam();
     });

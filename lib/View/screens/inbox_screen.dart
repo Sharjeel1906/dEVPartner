@@ -1,4 +1,5 @@
 import 'package:dev_partner/View/screens/chat_screen.dart';
+import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,47 @@ class InboxScreen extends StatefulWidget {
 
 class _InboxScreenState extends State<InboxScreen> {
   final TextEditingController searchController = TextEditingController();
+  bool _selectionMode = false;
+  final Set<int> _selectedConversationIds = {};
+
+  void _clearSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedConversationIds.clear();
+    });
+  }
+
+  void _enterSelection(int conversationId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedConversationIds.add(conversationId);
+    });
+  }
+
+  void _toggleSelection(int conversationId) {
+    setState(() {
+      if (_selectedConversationIds.contains(conversationId)) {
+        _selectedConversationIds.remove(conversationId);
+        if (_selectedConversationIds.isEmpty) {
+          _selectionMode = false;
+        }
+      } else {
+        _selectedConversationIds.add(conversationId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedConversations() async {
+    if (_selectedConversationIds.isEmpty) return;
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      message: "Delete selected conversations?",
+    );
+    if (!mounted || !confirmed) return;
+    final cp = context.read<ChatProvider>();
+    await cp.deleteConversations(_selectedConversationIds.toList());
+    _clearSelection();
+  }
 
   @override
   void initState() {
@@ -23,6 +65,7 @@ class _InboxScreenState extends State<InboxScreen> {
       final cp = Provider.of<ChatProvider>(context, listen: false);
       await cp.initUser();
       await cp.getAllConversations();
+
     });
   }
 
@@ -38,6 +81,19 @@ class _InboxScreenState extends State<InboxScreen> {
         iconTheme: IconThemeData(color: C.green),
         backgroundColor: C.bg,
         elevation: 0,
+        leading: _selectionMode
+            ? IconButton(
+                icon: Icon(Icons.close, color: C.green),
+                onPressed: _clearSelection,
+              )
+            : null,
+        actions: [
+          if (_selectionMode && _selectedConversationIds.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: C.green),
+              onPressed: _deleteSelectedConversations,
+            ),
+        ],
         title: ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
             colors: [C.green, C.cyan],
@@ -92,10 +148,9 @@ class _InboxScreenState extends State<InboxScreen> {
                     if (chat == null) return false;
                     final user = chat["user"];
                     if (user == null) return false;
-                    if (user["name"] == null && user["profile_image"] == null) {
-                      return false;
-                    }
-                    return true;
+                    // ✅ check username too
+                    final hasName = user["name"] != null || user["username"] != null;
+                    return hasName;
                   }).toList();
 
                   if (chats.isEmpty) {
@@ -157,9 +212,28 @@ class _InboxScreenState extends State<InboxScreen> {
                       final name =
                           user["username"] ?? user["name"] ?? "Unknown";
                       final lastMessage = chat["last_message"] ?? "";
+                      final conversationId = chat["id"] is int
+                          ? chat["id"] as int
+                          : int.tryParse(chat["id"]?.toString() ?? "");
+                      final isSelected = conversationId != null &&
+                          _selectedConversationIds.contains(conversationId);
+                      final unreadCount = chat["unread_count"] is int
+                          ? chat["unread_count"] as int
+                          : int.tryParse(chat["unread_count"]?.toString() ?? "") ?? 0;
+
+                      debugPrint("Chat ${chat["id"]} unread_count raw: ${chat["unread_count"]} → parsed: $unreadCount"); // 👈 add this
 
                       return GestureDetector(
+                        onLongPress: () {
+                          if (conversationId == null) return;
+                          _enterSelection(conversationId);
+                        },
                         onTap: () {
+                          if (_selectionMode) {
+                            if (conversationId == null) return;
+                            _toggleSelection(conversationId);
+                            return;
+                          }
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -179,7 +253,10 @@ class _InboxScreenState extends State<InboxScreen> {
                           decoration: BoxDecoration(
                             color: C.surface.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(width * 0.04),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(
+                              color: isSelected ? C.green : Colors.white12,
+                              width: isSelected ? 1.5 : 1,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: C.surface.withOpacity(0.1),
@@ -256,7 +333,7 @@ class _InboxScreenState extends State<InboxScreen> {
                                       fontSize: width * 0.03,
                                     ),
                                   ),
-                                  if ((chat["unread_count"]) > 0)
+                                  if (unreadCount > 0)
                                     Container(
                                       margin: EdgeInsets.only(
                                         top: height * 0.005,
@@ -272,7 +349,7 @@ class _InboxScreenState extends State<InboxScreen> {
                                         ),
                                       ),
                                       child: Text(
-                                        chat["unread_count"].toString(),
+                                        unreadCount.toString(),
                                         style: TextStyle(
                                           color: C.bg,
                                           fontSize: width * 0.028,

@@ -19,16 +19,11 @@ class ChatProvider extends ChangeNotifier {
   WebSocketChannel? channel;
   StreamSubscription? _socketSub;
 
-  int getUnreadCount(int myId) {
-    return messages.where((msg) {
-      final senderId = msg["sender_id"];
-      final isRead = msg["is_read"] == true;
-
-      return senderId != null &&
-          senderId != myId &&
-          isRead == false;
-    }).length;
+  static int _parseUnread(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? "") ?? 0;
   }
+
   static int? _parseId(dynamic value) {
     if (value is int) return value;
     return int.tryParse(value?.toString() ?? "");
@@ -60,6 +55,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> initUser() async {
+    currentUserId = null;
     currentUserId = await _getCurrentUserId();
     notifyListeners();
   }
@@ -125,6 +121,47 @@ class ChatProvider extends ChangeNotifier {
     return otherUser;
   }
 
+  // ─── NEW: mark conversation as read and persist last seen message id ───
+  Future<void> markConversationAsRead(int otherUserId) async {
+    if (messages.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final lastId = _parseId(messages.last["id"]);
+    if (lastId != null) {
+      await prefs.setInt("last_read_$otherUserId", lastId);
+    }
+    // immediately zero-out the badge in the list
+    final idx = conversations.indexWhere(
+          (c) => _sameId(c["user"]?["id"], otherUserId),
+    );
+    if (idx != -1) {
+      conversations[idx] = Map<String, dynamic>.from(conversations[idx])
+        ..["unread_count"] = 0;
+      notifyListeners();
+    }
+  }
+
+  // ─── NEW: compute unread count locally from loaded messages ───
+  Future<int> _computeUnread(int otherUserId, List<dynamic> msgs) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastReadId = prefs.getInt("last_read_$otherUserId");
+
+    if (lastReadId == null) {
+      // never opened — every received message is unread
+      return msgs.where((m) => m["is_me"] == false).length;
+    }
+
+    int count = 0;
+    for (final msg in msgs) {
+      if (msg["is_me"] == false) {
+        final msgId = _parseId(msg["id"]);
+        if (msgId != null && msgId > lastReadId) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
   Future<void> getAllConversations() async {
     try {
       isLoading = true;
@@ -136,62 +173,103 @@ class ChatProvider extends ChangeNotifier {
       conversations = raw
           .whereType<Map>()
           .map((conv) {
-            final c = Map<String, dynamic>.from(conv);
-            final otherUser = _resolveOtherUser(c, currentUserId);
+        final c = Map<String, dynamic>.from(conv);
+        final otherUser = _resolveOtherUser(c, currentUserId);
 
-            if (_sameId(otherUser["id"], currentUserId)) {
-              return null;
-            }
+        if (_sameId(otherUser["id"], currentUserId)) {
+          return null;
+        }
 
-            final resolvedName =
-                (otherUser["name"]?.toString().isNotEmpty == true)
-                ? otherUser["name"].toString()
-                : (otherUser["username"] ?? "").toString();
+        final resolvedName =
+        (otherUser["name"]?.toString().isNotEmpty == true)
+            ? otherUser["name"].toString()
+            : (otherUser["username"] ?? "").toString();
 
-            final lastMsg = c["last_message"];
-            String lastText = "";
-            String? lastTime;
+        final lastMsg = c["last_message"];
+        String lastText = "";
+        String? lastTime;
 
-            if (lastMsg is Map) {
-              lastText = (lastMsg["content"] ?? lastMsg["text"] ?? "")
-                  .toString();
-              lastTime = lastMsg["timestamp"]?.toString();
-            } else if (lastMsg is String) {
-              lastText = lastMsg;
-            }
+        if (lastMsg is Map) {
+          lastText = (lastMsg["content"] ?? lastMsg["text"] ?? "")
+              .toString();
+          lastTime = lastMsg["timestamp"]?.toString();
+        } else if (lastMsg is String) {
+          lastText = lastMsg;
+        }
 
-            lastText = lastText.isNotEmpty
-                ? lastText
-                : (c["last_message_text"] ?? c["message_preview"] ?? "")
-                      .toString();
+        lastText = lastText.isNotEmpty
+            ? lastText
+            : (c["last_message_text"] ?? c["message_preview"] ?? "")
+            .toString();
 
-            final timeSource =
-                lastTime ??
+        final timeSource =
+            lastTime ??
                 c["last_message_time"]?.toString() ??
                 c["updated_at"]?.toString() ??
                 c["created_at"]?.toString();
 
-            return {
-              "id": c["id"],
-              "user": {
-                "id": otherUser["id"],
-                "name": resolvedName,
-                "username": otherUser["username"] ?? resolvedName,
-                "profile_image": _resolveImageUrl(
-                  otherUser["profile_image"] ?? otherUser["pfp_path"],
-                ),
-                "is_online": otherUser["is_online"] == true,
-              },
-              "last_message": lastText,
-              "time": _formatTime(timeSource),
-              "unread_count": getUnreadCount(c["id"]),
-            };
-          })
+        return {
+          "id": c["id"],
+          "user": {
+            "id": otherUser["id"],
+            "name": resolvedName,
+            "username": otherUser["username"] ?? resolvedName,
+            "profile_image": _resolveImageUrl(
+              otherUser["profile_image"] ?? otherUser["pfp_path"],
+            ),
+            "is_online": otherUser["is_online"] == true,
+          },
+          "last_message": lastText,
+          "time": _formatTime(timeSource),
+          "unread_count": _parseUnread(c["unread_count"]),
+        };
+      })
           .whereType<Map<String, dynamic>>()
           .toList();
+
+      // Show the list immediately so the UI is responsive
+      isLoading = false;
+      notifyListeners();
+
+      // Now compute unread counts in the background
+      await _recomputeUnreadCounts();
+
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // ─── NEW: fetch each conversation's messages and compute unread locally ───
+  Future<void> _recomputeUnreadCounts() async {
+    final myId = currentUserId;
+    final List<Map<String, dynamic>> localConvs = List<Map<String, dynamic>>.from(
+      conversations.whereType<Map<String, dynamic>>(),
+    );
+
+    for (int i = 0; i < localConvs.length; i++) {
+      final conv = localConvs[i];
+      final otherUserId = _parseId(conv["user"]?["id"]);
+      if (otherUserId == null) continue;
+
+      final result = await _chatService.getConversationMessages(otherUserId);
+      if (result == null || result.containsKey("error")) continue;
+
+      final raw = result["messages"] as List<dynamic>? ?? [];
+      final msgs = raw
+          .map((m) => _mapMessage(Map<String, dynamic>.from(m as Map), myId))
+          .toList();
+
+      final unread = await _computeUnread(otherUserId, msgs);
+
+      if (conversations.isEmpty) return;
+
+      final liveIdx = conversations.indexWhere((c) => _sameId(c["id"], conv["id"]));
+      if (liveIdx != -1) {
+        conversations[liveIdx] = Map<String, dynamic>.from(conversations[liveIdx])
+          ..["unread_count"] = unread;
+        notifyListeners();
+      }
     }
   }
 
@@ -229,6 +307,16 @@ class ChatProvider extends ChangeNotifier {
     }
 
     messages.add(mapped);
+
+    if (mapped["id"] != null) {
+      final senderId = _parseId(msg["sender_id"]);
+      if (senderId != null && senderId != myId) {
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setInt("last_read_$senderId", _parseId(mapped["id"])!);
+        });
+      }
+    }
+
     notifyListeners();
   }
 
@@ -248,10 +336,44 @@ class ChatProvider extends ChangeNotifier {
 
   void sendMessage(String text) {
     if (channel == null || text.trim().isEmpty) return;
-
     channel!.sink.add(jsonEncode({"content": text.trim()}));
   }
 
+  Future<void> deleteMessages(List<int> messageIds) async {
+    final deletedIds = <int>[];
+    for (final id in messageIds) {
+      final success = await _chatService.deleteMessage(id);
+      if (success) {
+        deletedIds.add(id);
+      }
+    }
+    messages.removeWhere(
+          (m) => deletedIds.contains(_parseId(m["id"])),
+    );
+    notifyListeners();
+  }
+
+  Future<void> deleteConversations(List<int> conversationIds) async {
+    final deletedIds = <int>[];
+    for (final id in conversationIds) {
+      final success = await _chatService.deleteConversation(id);
+      if (success) {
+        deletedIds.add(id);
+      }
+    }
+    conversations.removeWhere(
+          (c) => deletedIds.contains(_parseId(c["id"])),
+    );
+    notifyListeners();
+  }
+
+  void resetSession() {
+    conversations.clear();
+    msgController.clear();
+    isLoading = false;
+    currentUserId = null;
+    notifyListeners();
+  }
 
   void disconnectSocket() {
     _socketSub?.cancel();

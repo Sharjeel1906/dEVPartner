@@ -289,6 +289,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     SizedBox(height: height * 0.03),
 
                     _buildMemberButton(context, up, tp, user, height),
+                    SizedBox(height: height * 0.02),
+                    _buildRemoveMemberButton(context, up, tp, user, height),
                   ],
                 ),
               ),
@@ -321,10 +323,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
 
     if (!tp.canManageMembers(up.currentUserId, up.selectedRole)) {
-      return Text(
-        "Only team leader can add members",
-        textAlign: TextAlign.center,
-        style: TextStyle(color: C.textLabel, fontSize: height * 0.017),
+      return Center(
+        child: Text(
+          "Only team leader can add members",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: C.cyan, fontSize: height * 0.017),
+        ),
       );
     }
 
@@ -403,6 +407,81 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 "Add Member",
                 style: TextStyle(
                   color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: height * 0.017,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildRemoveMemberButton(
+    BuildContext context,
+    UserProvider up,
+    TeamProvider tp,
+    Map<String, dynamic> user,
+    double height,
+  ) {
+    final viewedId = _userId(user);
+    if (viewedId == null ||
+        viewedId == up.currentUserId ||
+        !tp.isCurrentUserTeamLeader(up.currentUserId) ||
+        !tp.isUserInMyTeam(viewedId)) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: C.surface,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: const BorderSide(color: C.pink),
+          ),
+        ),
+        onPressed: tp.isLoading
+            ? null
+            : () async {
+                final teamId = _teamId(tp.myTeam!);
+                if (teamId == null) return;
+
+                final confirmed = await showConfirmDeleteDialog(
+                  context,
+                  title: "Remove Member",
+                  message: "Remove this member from your team?",
+                );
+                if (!context.mounted || !confirmed) return;
+
+                final result = await tp.removeTeamMember(
+                  teamId: teamId,
+                  memId: viewedId,
+                );
+
+                if (!context.mounted) return;
+
+                customColoredBox(
+                  context,
+                  result["message"]?.toString() ??
+                      (result["success"] == true
+                          ? "Member removed successfully"
+                          : "Failed to remove member"),
+                );
+              },
+        child: tp.isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: C.cyan,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                "Remove Member",
+                style: TextStyle(
+                  color: C.pink,
                   fontWeight: FontWeight.bold,
                   fontSize: height * 0.017,
                 ),

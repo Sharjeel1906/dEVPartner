@@ -55,4 +55,30 @@ class ChatService {
       return null;
     }
   }
+
+  Future<bool> deleteMessage(int messageId) async {
+    try {
+      final request = http.Request(
+        "DELETE",
+        Uri.parse("${ApiClient.baseUrl}/message/$messageId/"),
+      );
+      final response = await _client.sendRequest(request);
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteConversation(int conversationId) async {
+    try {
+      final request = http.Request(
+        "DELETE",
+        Uri.parse("${ApiClient.baseUrl}/conversation/$conversationId/"),
+      );
+      final response = await _client.sendRequest(request);
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      return false;
+    }
+  }
 }

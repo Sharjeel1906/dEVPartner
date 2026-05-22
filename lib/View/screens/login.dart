@@ -169,7 +169,6 @@ class LoginScreen extends StatelessWidget {
                                 await up.loadCurrentUser(silent: true);
                                 context.read<ChatProvider>().resetSession();
                                 await context.read<ChatProvider>().initUser(
-                                  forceRefresh: true,
                                 );
                                 if (!context.mounted) return;
                                 Navigator.pushReplacement(

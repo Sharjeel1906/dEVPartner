@@ -193,4 +193,104 @@ class TeamService {
       };
     }
   }
+
+  Future<Map<String, dynamic>> removeTeamMember({
+    required int teamId,
+    required int memId,
+  }) async {
+    try {
+      final request = http.Request(
+        "POST",
+        Uri.parse("${ApiClient.baseUrl}/remove_team_member/"),
+      );
+      request.headers["Content-Type"] = "application/json";
+      request.body = jsonEncode({
+        "team_id": teamId,
+        "user_id": memId,
+      });
+      final response = await _client.sendRequest(request);
+      final body = await response.stream.bytesToString();
+      final data = jsonDecode(body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": data["message"] ?? "Member removed",
+        };
+      }
+      return {
+        "success": false,
+        "message": data["message"] ?? data["error"] ?? "Failed",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Something went wrong",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> requestExitTeam() async {
+    try {
+      final request = http.Request(
+        "POST",
+        Uri.parse("${ApiClient.baseUrl}/request_exit_team/"),
+      );
+
+      final response = await _client.sendRequest(request);
+
+      final body = await response.stream.bytesToString();
+      final data = jsonDecode(body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message":
+          data["success"] ?? "Exit request sent successfully",
+        };
+      }
+
+      return {
+        "success": false,
+        "message":
+        data["error"] ?? "Failed to submit exit request",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Something went wrong",
+      };
+    }
+  }
+  // ================= DELETE TEAM =================
+  Future<Map<String, dynamic>> deleteTeam({
+    required int teamId,
+  }) async {
+    try {
+      final request = http.Request(
+        "DELETE",
+        Uri.parse("${ApiClient.baseUrl}/team/delete/$teamId/"),
+      );
+
+      final response = await _client.sendRequest(request);
+      final body = await response.stream.bytesToString();
+      final data = jsonDecode(body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": data["message"] ?? "Team deleted successfully",
+        };
+      }
+
+      return {
+        "success": false,
+        "message": data["error"] ?? "Failed to delete team",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Something went wrong",
+      };
+    }
+  }
 }

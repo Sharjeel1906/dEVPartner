@@ -299,6 +299,48 @@ class TeamProvider extends ChangeNotifier {
     return memberCount(myTeam!) < teamTotalSize(myTeam!);
   }
 
+  bool isUserInMyTeam(int? userId) {
+    if (myTeam == null || userId == null) return false;
+    for (final m in parseMembers(myTeam!)) {
+      final memId = m["user_id"] ?? m["id"] ?? m["mem_id"];
+      if (_parseInt(memId, -1) == userId) return true;
+    }
+    return false;
+  }
+
+  Future<Map<String, dynamic>> removeTeamMember({
+    required int teamId,
+    required int memId,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      final result = await _teamService.removeTeamMember(
+        teamId: teamId,
+        memId: memId,
+      );
+      if (result["success"] == true) {
+        await getMyTeam();
+      }
+      return result;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> requestExitTeam() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      return await _teamService.requestExitTeam();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<Map<String, dynamic>> addTeamMember({
     required int teamId,
     required int memId,
@@ -390,6 +432,25 @@ class TeamProvider extends ChangeNotifier {
       teamDetails = result != null ? normalizeTeam(result) : null;
     } finally {
       isDetailsLoading = false;
+      notifyListeners();
+    }
+  }
+  Future<Map<String, dynamic>> deleteTeam(int teamId) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final result = await _teamService.deleteTeam(teamId: teamId);
+
+      if (result["success"] == true) {
+        myTeam = null;
+
+        await getAllTeams();
+      }
+
+      return result;
+    } finally {
+      isLoading = false;
       notifyListeners();
     }
   }
