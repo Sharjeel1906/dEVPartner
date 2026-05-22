@@ -4,6 +4,9 @@ import 'package:dev_partner/View/screens/create_team.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/my_team_screen.dart';
 import 'package:dev_partner/View/screens/register.dart';
+import 'package:dev_partner/View/screens/help_support_screen.dart';
+import 'package:dev_partner/View/screens/disclaimer_screen.dart';
+import 'package:dev_partner/View/screens/privacy_policy_screen.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
 import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
@@ -190,9 +193,15 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                 spacer(),
 
                 // Help & Policy
-                drawerItem(Icons.help_outline, "Help & Support", () {}),
-                drawerItem(Icons.warning_amber_rounded, "Disclaimer", () {}),
-                drawerItem(Icons.privacy_tip_outlined, "Privacy Policy", () {}),
+                drawerItem(Icons.help_outline, "Help & Support", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpSupportScreen()));
+                }),
+                drawerItem(Icons.warning_amber_rounded, "Disclaimer", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const DisclaimerScreen()));
+                }),
+                drawerItem(Icons.privacy_tip_outlined, "Privacy Policy", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
+                }),
               ],
             ),
           ),

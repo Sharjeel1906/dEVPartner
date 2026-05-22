@@ -191,7 +191,7 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
                             "Looking for team members",
                         skills: const [],
                         role: roles.isNotEmpty ? roles : ["Not specified"],
-                        spotsLeft: ((total+1)-openSpots)+2,
+                        spotsLeft: openSpots-memberTotal,
                         totalSpots: total,
                         timeAgo: TeamProvider.formatTeamDate(team["created_at"]),
                         leaderName: team["group_lead_name"]?.toString() ?? "",

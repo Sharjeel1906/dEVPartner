@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dev_partner/View/screens/home_screen.dart';
 import 'package:dev_partner/View/screens/login.dart';
 import 'package:dev_partner/View/screens/on_boarding.dart';
+import 'package:dev_partner/View/screens/splash_screen.dart';
 import 'package:dev_partner/model/auth_services.dart';
 import 'package:dev_partner/model_view/auth_provider.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
@@ -68,7 +69,7 @@ class MyApp extends StatelessWidget {
 
       theme: appTheme,
 
-      home: initialScreen,
+      home: SplashScreen(nextScreen: initialScreen),
 
     );
 

@@ -189,7 +189,7 @@ Widget projectCard({
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "${project.spotsLeft - 1} spots left",
+              "${project.spotsLeft} spots left",
               style: GoogleFonts.spaceMono(
                 color: C.textMuted,
                 fontSize: width * 0.03,

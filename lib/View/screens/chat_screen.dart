@@ -26,9 +26,43 @@ class ChatScreenUI extends StatefulWidget {
 
 class _ChatScreenUIState extends State<ChatScreenUI> {
   final TextEditingController msgController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _msgFocusNode = FocusNode();
+  int _lastMessagesLength = 0;
   late ChatProvider _chatProvider;
   bool _selectionMode = false;
   final Set<int> _selectedMessageIds = {};
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _onMessagesChanged() {
+    if (!mounted) return;
+    final cp = Provider.of<ChatProvider>(context, listen: false);
+    if (cp.messages.length != _lastMessagesLength) {
+      _lastMessagesLength = cp.messages.length;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+  }
+
+  void _onFocusChanged() {
+    if (_msgFocusNode.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) {
+          _scrollToBottom();
+        }
+      });
+    }
+  }
 
   void _clearSelection() {
     setState(() {
@@ -77,9 +111,12 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
   @override
   void initState() {
     super.initState();
+    final cp = Provider.of<ChatProvider>(context, listen: false);
+    cp.addListener(_onMessagesChanged);
+    _msgFocusNode.addListener(_onFocusChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      final cp = Provider.of<ChatProvider>(context, listen: false);
       await cp.initUser();
       cp.currentUserId = cp.currentUserId ?? widget.currentUserId;
       cp.clearMessages();
@@ -87,13 +124,21 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
       await cp.markConversationAsRead(widget.userId); // ← add this line
       final senderId = cp.currentUserId ?? widget.currentUserId;
       await cp.connectSocket(widget.userId, senderId);
+      
+      // Initialize length and scroll to bottom
+      _lastMessagesLength = cp.messages.length;
+      _scrollToBottom();
     });
   }
 
   @override
   void dispose() {
+    _chatProvider.removeListener(_onMessagesChanged);
     _chatProvider.disconnectSocket();
+    _msgFocusNode.removeListener(_onFocusChanged);
+    _msgFocusNode.dispose();
     msgController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -197,6 +242,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
               ),
             )
                 : ListView.builder(
+              controller: _scrollController,
               padding: EdgeInsets.symmetric(
                 horizontal: width * 0.04,
                 vertical: height * 0.02,
@@ -329,6 +375,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                     ),
                     child: TextField(
                       controller: msgController,
+                      focusNode: _msgFocusNode,
                       style: const TextStyle(color: Colors.white),
                       cursorColor: C.green,
                       decoration: InputDecoration(
