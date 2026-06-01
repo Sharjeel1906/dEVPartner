@@ -346,7 +346,7 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                   final imagePath = profile["pfp_path"];
                   final imageUrl =
                   imagePath != null
-                      ? "http://192.168.100.11:8000$imagePath"
+                      ? "https://fyp-partner-finder-app-backend-production.up.railway.app$imagePath"
                       : "";
                   return profileCard(
                     context,

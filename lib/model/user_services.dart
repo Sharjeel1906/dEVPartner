@@ -113,6 +113,7 @@ class UserServices {
       final response = await _client.sendPublicRequest(request);
 
       if (response.statusCode == 200) {
+
         return jsonDecode(await response.stream.bytesToString());
       }
 

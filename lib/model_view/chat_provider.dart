@@ -325,18 +325,28 @@ class ChatProvider extends ChangeNotifier {
 
     final myId = await _getCurrentUserId();
 
-    channel = WebSocketChannel.connect(
-      Uri.parse("ws://192.168.100.11:8000/ws/chat/$senderId/$receiverId/"),
+    final uri = Uri.parse(
+      "wss://fyp-partner-finder-app-backend-production.up.railway.app/ws/chat/$senderId/$receiverId/",
     );
 
-    _socketSub = channel!.stream.listen((data) {
-      _onSocketMessage(data, myId);
-    });
+    channel = WebSocketChannel.connect(uri);
+
+    _socketSub?.cancel();
+    _socketSub = channel!.stream.listen(
+          (data) => _onSocketMessage(data, myId),
+      onError: (e) => debugPrint("❌ SOCKET ERROR: $e"),
+      onDone: () => debugPrint("🔴 SOCKET CLOSED"),
+    );
   }
+
 
   void sendMessage(String text) {
     if (channel == null || text.trim().isEmpty) return;
-    channel!.sink.add(jsonEncode({"content": text.trim()}));
+    try {
+      channel!.sink.add(jsonEncode({"content": text.trim()}));
+    } catch (e) {
+      debugPrint("❌ Failed to send message: $e");
+    }
   }
 
   Future<void> deleteMessages(List<int> messageIds) async {

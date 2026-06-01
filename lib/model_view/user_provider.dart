@@ -304,7 +304,7 @@ class UserProvider extends ChangeNotifier {
       selectedSkills = skills.map((s) => s["name"].toString()).toList();
     }
 
-    const baseUrl = "http://192.168.100.11:8000";
+    const baseUrl = "https://fyp-partner-finder-app-backend-production.up.railway.app";
     final pfp = profile["pfp_path"]?.toString() ??
         user["pfp_path"]?.toString() ??
         "";
