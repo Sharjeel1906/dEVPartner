@@ -350,9 +350,9 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
             child: Container(
               padding: EdgeInsets.fromLTRB(
                 width * 0.04,
-                height * 0.014,
+                height * 0.010,
                 width * 0.04,
-                height * 0.018,
+                height * 0.015,
               ),
               decoration: BoxDecoration(
                 color: C.surface.withOpacity(0.12),

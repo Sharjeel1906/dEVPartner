@@ -7,6 +7,7 @@ class ProfileAvatar extends StatelessWidget {
   final double radius;
   final bool showGradientRing;
   final Color iconColor;
+  final Color backgroundColor;
 
   static const String railwayBase =
       'https://fyp-partner-finder-app-backend-production.up.railway.app';
@@ -16,7 +17,8 @@ class ProfileAvatar extends StatelessWidget {
     required this.imageUrl,
     required this.radius,
     this.showGradientRing = false,
-    this.iconColor = C.green,
+    this.iconColor = C.textMuted,
+    this.backgroundColor = C.bg,
   });
 
   static String urlFromPath(dynamic path) {
@@ -28,58 +30,60 @@ class ProfileAvatar extends StatelessWidget {
 
   static Future<void> preloadImages(
     BuildContext context,
-    Iterable<String> urls,
-  ) async {
+    Iterable<String> urls, {
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
     final unique = urls.where((u) => u.isNotEmpty).toSet();
-    for (final url in unique) {
-      try {
-        await precacheImage(NetworkImage(url), context);
-      } catch (_) {}
-    }
+    try {
+      await Future.any([
+        Future.wait(
+          unique.map((url) async {
+            try {
+              await precacheImage(NetworkImage(url), context);
+            } catch (_) {}
+          }),
+        ),
+        Future.delayed(timeout),
+      ]);
+    } catch (_) {}
   }
 
   Widget _fallback() {
     return Icon(
       Icons.person_rounded,
       color: iconColor,
-      size: radius * 1.1,
+      size: radius * 1.05,
     );
   }
 
   Widget _avatarCore() {
-    if (imageUrl.isEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: C.surface,
-        child: _fallback(),
-      );
-    }
-
     return CircleAvatar(
       radius: radius,
-      backgroundColor: C.surface,
-      child: ClipOval(
-        child: Image.network(
-          imageUrl,
-          width: radius * 2,
-          height: radius * 2,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-          errorBuilder: (_, __, ___) => SizedBox(
-            width: radius * 2,
-            height: radius * 2,
-            child: Center(child: _fallback()),
-          ),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return SizedBox(
-              width: radius * 2,
-              height: radius * 2,
-              child: Center(child: _fallback()),
-            );
-          },
-        ),
-      ),
+      backgroundColor: backgroundColor,
+      child: imageUrl.isEmpty
+          ? _fallback()
+          : ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (_, __, ___) => SizedBox(
+                  width: radius * 2,
+                  height: radius * 2,
+                  child: Center(child: _fallback()),
+                ),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return SizedBox(
+                    width: radius * 2,
+                    height: radius * 2,
+                    child: Center(child: _fallback()),
+                  );
+                },
+              ),
+            ),
     );
   }
 

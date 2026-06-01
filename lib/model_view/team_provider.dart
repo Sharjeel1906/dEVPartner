@@ -36,8 +36,8 @@ class TeamProvider extends ChangeNotifier {
   }
 
   static int teamTotalSize(Map<String, dynamic> team) {
-    final size = team["available_team_size"];
-    return size;
+    final size = team["team_size"] ?? team["available_team_size"];
+    return _parseInt(size, 0);
   }
 
   static int memberCount(Map<String, dynamic> team) {

@@ -167,8 +167,7 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
                   final Color color = accentColors[index % accentColors.length];
 
                   final int total = TeamProvider.teamTotalSize(team);
-                  final int memberTotal = TeamProvider.memberCount(team);
-                  final int openSpots = total - memberTotal;
+                  final int openSpots = TeamProvider.openSpots(team);
                   final teamId = TeamProvider.teamIdFromMap(team);
                   final roles = TeamProvider.parseReqRoles(team["roles"]);
 
@@ -191,7 +190,7 @@ class _BrowseTeamsScreenState extends State<BrowseTeamsScreen> {
                             "Looking for team members",
                         skills: const [],
                         role: roles.isNotEmpty ? roles : ["Not specified"],
-                        spotsLeft: openSpots-memberTotal,
+                        spotsLeft: openSpots,
                         totalSpots: total,
                         timeAgo: TeamProvider.formatTeamDate(team["created_at"]),
                         leaderName: team["group_lead_name"]?.toString() ?? "",

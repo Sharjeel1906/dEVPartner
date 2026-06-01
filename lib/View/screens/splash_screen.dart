@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:dev_partner/View/widgets/profile_avatar.dart';
-import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,7 +22,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  Future<void>? _contentPreload;
+  bool _preloadStarted = false;
+
+  /// Total splash visible time before navigation (~4s).
+  static const int _navigateMs = 4000;
+  static const int _masterMs = 3600;
+  static const int _progressStartMs = 2100;
+  static const int _progressFillMs = 1500;
+  static const int _exitFadeMs = 450;
 
   // Master timeline
   late AnimationController _masterController;
@@ -67,42 +73,42 @@ class _SplashScreenState extends State<SplashScreen>
   void _setupControllers() {
     _masterController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
+      duration: const Duration(milliseconds: _masterMs),
     );
 
     _ringRotateController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 10000),
+      duration: const Duration(milliseconds: 5000),
     )..repeat();
 
     _ringRotateRevController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 7000),
+      duration: const Duration(milliseconds: 3500),
     )..repeat();
 
     _bgPulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000),
+      duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true);
 
     _scanLineController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 1800),
     )..repeat();
 
     _logoPulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
     _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: _progressFillMs),
     );
 
     _glitchController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 6000),
+      duration: const Duration(milliseconds: 2800),
     )..repeat();
   }
 
@@ -221,60 +227,47 @@ class _SplashScreenState extends State<SplashScreen>
     ]).animate(_glitchController);
   }
 
-  Future<void> _preloadBrowseAndInboxImages() async {
-    final up = context.read<UserProvider>();
-    final cp = context.read<ChatProvider>();
-    if (up.allUsers.isEmpty) {
-      await up.loadAllUsers();
-    }
-    if (cp.conversations.isEmpty) {
-      await cp.initUser();
-      await cp.getAllConversations();
-    }
-    final urls = <String>[];
-    for (final user in up.allUsers) {
-      if (user is Map) {
-        final profile = user["profile"];
-        if (profile is Map) {
-          urls.add(ProfileAvatar.urlFromPath(profile["pfp_path"]));
-        }
+  Future<void> _preloadBrowseProfileImages() async {
+    try {
+      final up = context.read<UserProvider>();
+      if (up.allUsers.isEmpty) {
+        await up.loadAllUsers();
       }
-    }
-    for (final conv in cp.conversations) {
-      if (conv is Map) {
-        final user = conv["user"];
+      final urls = <String>[];
+      for (final user in up.allUsers) {
         if (user is Map) {
-          final img = user["profile_image"]?.toString() ?? '';
-          if (img.isNotEmpty) urls.add(img);
+          final profile = user["profile"];
+          if (profile is Map) {
+            urls.add(ProfileAvatar.urlFromPath(profile["pfp_path"]));
+          }
         }
       }
-    }
-    if (!mounted) return;
-    await ProfileAvatar.preloadImages(context, urls);
+      if (!mounted || urls.isEmpty) return;
+      await ProfileAvatar.preloadImages(
+        context,
+        urls.take(25),
+        timeout: const Duration(seconds: 2),
+      );
+    } catch (_) {}
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.preloadContent && _contentPreload == null) {
-      _contentPreload = _preloadBrowseAndInboxImages();
+    if (widget.preloadContent && !_preloadStarted) {
+      _preloadStarted = true;
+      _preloadBrowseProfileImages();
     }
   }
 
   void _startSequence() {
     _masterController.forward();
 
-    // Delay the progress bar fill slightly
-    Future.delayed(const Duration(milliseconds: 1700), () {
+    Future.delayed(const Duration(milliseconds: _progressStartMs), () {
       if (mounted) _progressController.forward();
     });
 
-    // Navigate after splash
-    Future.delayed(const Duration(milliseconds: 3200), () async {
-      if (!mounted) return;
-      if (_contentPreload != null) {
-        await _contentPreload;
-      }
+    Future.delayed(const Duration(milliseconds: _navigateMs), () {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -287,7 +280,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: child,
             );
           },
-          transitionDuration: const Duration(milliseconds: 700),
+          transitionDuration: const Duration(milliseconds: _exitFadeMs),
         ),
       );
     });
@@ -885,27 +878,28 @@ class _SplashScreenState extends State<SplashScreen>
 
   // ── Floating symbols ────────────────────────────────────────────────────
   List<Widget> _buildFloatingSymbols(double w, double h) {
+    // delay = stagger in seconds (all visible within ~2.5s)
     final symbols = [
-      ('</>', 0.08, 0.72, C.green, 0.22, 7.0),
-      ('{ }', 0.82, 0.66, C.cyan, 0.18, 9.5),
-      ('0x1f', 0.14, 0.28, Colors.white, 0.09, 6.5),
-      ('⌘', 0.78, 0.20, C.green, 0.16, 11.0),
-      ('fn()', 0.05, 0.50, C.cyan, 0.13, 8.0),
-      ('[ ]', 0.88, 0.44, Colors.white, 0.07, 10.0),
-      ('git', 0.42, 0.14, C.green, 0.11, 9.0),
-      ('==', 0.62, 0.82, C.cyan, 0.13, 7.5),
-      ('//', 0.32, 0.88, Colors.white, 0.07, 6.0),
-      ('=>', 0.92, 0.72, C.green, 0.10, 8.5),
+      ('</>', 0.08, 0.72, C.green, 0.22, 0.05),
+      ('git', 0.42, 0.14, C.green, 0.14, 0.15),
+      ('{ }', 0.82, 0.66, C.cyan, 0.18, 0.25),
+      ('0x1f', 0.14, 0.28, Colors.white, 0.10, 0.35),
+      ('fn()', 0.05, 0.50, C.cyan, 0.14, 0.45),
+      ('⌘', 0.78, 0.20, C.green, 0.16, 0.55),
+      ('[ ]', 0.88, 0.44, Colors.white, 0.08, 0.65),
+      ('==', 0.62, 0.82, C.cyan, 0.13, 0.75),
+      ('//', 0.32, 0.88, Colors.white, 0.08, 0.85),
+      ('=>', 0.92, 0.72, C.green, 0.11, 0.95),
     ];
 
     return symbols.map((s) {
-      final (text, left, top, color, opacity, delay) = s;
+      final (text, left, top, color, opacity, delaySec) = s;
       return _FloatingSymbol(
         text: text,
         left: w * left,
         top: h * top,
         color: color.withOpacity(opacity),
-        delay: Duration(milliseconds: (delay * 1000).round()),
+        delay: Duration(milliseconds: (delaySec * 1000).round()),
       );
     }).toList();
   }
@@ -941,33 +935,27 @@ class _FloatingSymbolState extends State<_FloatingSymbol>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 8000),
+      duration: const Duration(milliseconds: 3800),
     );
 
     _opacity = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(0), weight: 5),
+      TweenSequenceItem(tween: ConstantTween(0), weight: 2),
       TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 0,
-          end: 1,
-        ),
-        weight: 2,
+        tween: Tween<double>(begin: 0, end: 1),
+        weight: 6,
       ),
-      TweenSequenceItem(tween: ConstantTween(1), weight: 66),
+      TweenSequenceItem(tween: ConstantTween(1), weight: 78),
       TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 0.6,
-        ),
-        weight: 2,
+        tween: Tween<double>(begin: 1.0, end: 0.35),
+        weight: 14,
       ),
     ]).animate(_ctrl);
 
-    _offsetY = Tween<double>(begin: 0, end: -70)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _offsetY = Tween<double>(begin: 8, end: -48)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
 
     Future.delayed(widget.delay, () {
-      if (mounted) _ctrl.repeat();
+      if (mounted) _ctrl.forward();
     });
   }
 
