@@ -1,14 +1,6 @@
 import 'package:dev_partner/View/models/profile.dart';
-import 'package:dev_partner/View/screens/create_profile.dart';
-import 'package:dev_partner/View/screens/create_team.dart';
-import 'package:dev_partner/View/screens/login.dart';
-import 'package:dev_partner/View/screens/my_team_screen.dart';
-import 'package:dev_partner/View/screens/register.dart';
-import 'package:dev_partner/View/screens/help_support_screen.dart';
-import 'package:dev_partner/View/screens/disclaimer_screen.dart';
-import 'package:dev_partner/View/screens/privacy_policy_screen.dart';
 import 'package:dev_partner/View/widgets/bp_ui_helper.dart';
-import 'package:dev_partner/model_view/auth_provider.dart';
+import 'package:dev_partner/View/widgets/profile_avatar.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,7 +15,11 @@ class  BrowseProfileScreen extends StatefulWidget {
   State<BrowseProfileScreen> createState() => _BrowseProfileScreenState();
 }
 
-class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
+class _BrowseProfileScreenState extends State<BrowseProfileScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController searchController = TextEditingController();
   late FocusNode searchFocusNode;
   @override
@@ -38,7 +34,9 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
       if (!mounted) return;
       await up.loadCurrentUser(silent: true);
       if (!mounted) return;
-      await up.loadAllUsers();
+      if (up.allUsers.isEmpty) {
+        await up.loadAllUsers();
+      }
     });
   }
   @override
@@ -50,15 +48,19 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final up = context.watch<UserProvider>();
-    final ap = context.read<AuthProvider>();
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.menu, color: C.green),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
         iconTheme: IconThemeData(
-          color: C.green, // <-- This sets the drawer/hamburger icon color
+          color: C.green,
         ),
         backgroundColor: C.bg,
         elevation: 0,
@@ -77,136 +79,7 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
           ),
         ),
       ),
-      drawer: Drawer(
-          width: (width * 0.65).clamp(260.0, 320.0), // professional width
-          child: Container(
-            color: C.bg, // fully matches your theme
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                // Drawer Header
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: C.surface.withOpacity(0.15), // subtle header background
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [C.green, C.cyan]),
-                        ),
-                        child: (up.selectedImage == null && up.currentImageUrl == null)
-                            ? CircleAvatar(
-                          radius: 22,
-                          backgroundColor: C.bg,
-                          child: Icon(
-                            Icons.account_circle_rounded,
-                            color: C.green,
-                            size: 32,
-                          ),
-                        )
-                            : CircleAvatar(
-                          radius: 25,
-                          backgroundColor: C.surface,
-                          child: ClipOval(
-                            child: up.selectedImage != null
-                                ? Image.file(
-                              up.selectedImage!,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            )
-                                : Image.network(
-                              up.currentImageUrl!,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        )
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              up.drawerUserName.isNotEmpty
-                                  ? up.drawerUserName
-                                  : "User",
-                              style: GoogleFonts.spaceMono(
-                                color: C.green,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              up.drawerUserDomain.isNotEmpty
-                                  ? up.drawerUserDomain
-                                  : "—",
-                              style: GoogleFonts.spaceMono(
-                                color: C.cyan.withOpacity(0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                drawerItem(Icons.app_registration, "Create Team", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateTeamScreen()));
-                }),
-                drawerItem(Icons.person, "My Profile", () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CreateProfileScreen()),
-                  ).then((_) async {
-                    if (!mounted) return;
-                    await context.read<UserProvider>().refreshBrowseData();
-                  });
-                }),
-                drawerItem(Icons.people, "My Team", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>MyTeamScreen()));
-                }),
-                drawerItem(Icons.logout_outlined, "Logout", () {
-                  ap.logout(context);
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                        (route) => false,
-                  );
-                }),
-                spacer(),
-
-                // Help & Policy
-                drawerItem(Icons.help_outline, "Help & Support", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpSupportScreen()));
-                }),
-                drawerItem(Icons.warning_amber_rounded, "Disclaimer", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const DisclaimerScreen()));
-                }),
-                drawerItem(Icons.privacy_tip_outlined, "Privacy Policy", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
-                }),
-              ],
-            ),
-          ),
-        ),
-      body: up.isLoading
+      body: up.isLoading && up.filteredUsers.isEmpty
           ? Center(
         child: CircularProgressIndicator(
           color: C.green,
@@ -343,11 +216,8 @@ class _BrowseProfileScreenState extends State<BrowseProfileScreen> {
                   final user = up.filteredUsers[index];
                   final profile = user["profile"] ?? {};
                   final skills = user["skills"] ?? [];
-                  final imagePath = profile["pfp_path"];
                   final imageUrl =
-                  imagePath != null
-                      ? "https://fyp-partner-finder-app-backend-production.up.railway.app$imagePath"
-                      : "";
+                      ProfileAvatar.urlFromPath(profile["pfp_path"]);
                   return profileCard(
                     context,
                     Profile(

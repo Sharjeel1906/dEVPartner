@@ -1,5 +1,6 @@
 import 'package:dev_partner/View/screens/browse_profile.dart';
 import 'package:dev_partner/View/screens/browse_teams.dart';
+import 'package:dev_partner/View/widgets/app_drawer.dart';
 import 'package:dev_partner/View/widgets/theme.dart';
 import 'package:dev_partner/model/auth_services.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
@@ -23,8 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  // List of screens
-  final List<Widget> screens = [
+  final List<Widget> screens = const [
     BrowseProfileScreen(),
     BrowseTeamsScreen(),
     AiMatchScreen(),
@@ -47,9 +47,15 @@ class _HomeScreenState extends State<HomeScreen> {
       await up.loadCachedUserFromPrefs();
       await up.loadCurrentUser(silent: true);
       if (!mounted) return;
+      if (up.allUsers.isEmpty) {
+        await up.loadAllUsers();
+      }
+      if (!mounted) return;
       final cp = context.read<ChatProvider>();
-      cp.resetSession();
       await cp.initUser();
+      if (cp.conversations.isEmpty) {
+        await cp.getAllConversations();
+      }
       if (!mounted) return;
       context.read<TeamProvider>().getMyTeam();
     });
@@ -59,19 +65,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C.bg,
-      // Render the currently selected screen
-      body: screens[_currentIndex],
-
-      // Bottom Navigation Bar
-        bottomNavigationBar: bottomNavigationBarUI(
-          context: context,
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-        )
+      drawer: buildAppDrawer(context),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: screens,
+      ),
+      bottomNavigationBar: bottomNavigationBarUI(
+        context: context,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
     );
   }
 }

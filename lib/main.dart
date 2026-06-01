@@ -26,9 +26,10 @@ void main() async {
     userProvider.applyUserFromMap(jsonDecode(userJson) as Map<String, dynamic>);
   }
   late final Widget initialScreen;
+  final preloadImages = isLoggedIn && accessToken != null;
   if (!onboardingCompleted) {
     initialScreen = const OnboardingScreen();
-  } else if (isLoggedIn && accessToken != null) {
+  } else if (preloadImages) {
     final refresh = prefs.getString("refresh_token");
     if (refresh != null) {
       await AuthService().refreshToken();
@@ -46,7 +47,10 @@ void main() async {
         ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider(create: (_) => EmailProvider()),
       ],
-      child: MyApp(initialScreen: initialScreen),
+      child: MyApp(
+        initialScreen: initialScreen,
+        preloadImages: preloadImages,
+      ),
     ),
   );
 }
@@ -55,7 +59,12 @@ void main() async {
 class MyApp extends StatelessWidget {
 
   final Widget initialScreen;
-  const MyApp({super.key, required this.initialScreen});
+  final bool preloadImages;
+  const MyApp({
+    super.key,
+    required this.initialScreen,
+    this.preloadImages = false,
+  });
 
   @override
 
@@ -69,7 +78,10 @@ class MyApp extends StatelessWidget {
 
       theme: appTheme,
 
-      home: SplashScreen(nextScreen: initialScreen),
+      home: SplashScreen(
+        nextScreen: initialScreen,
+        preloadContent: preloadImages,
+      ),
 
     );
 

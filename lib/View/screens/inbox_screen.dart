@@ -1,5 +1,6 @@
 import 'package:dev_partner/View/screens/chat_screen.dart';
 import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
+import 'package:dev_partner/View/widgets/profile_avatar.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,11 @@ class InboxScreen extends StatefulWidget {
   State<InboxScreen> createState() => _InboxScreenState();
 }
 
-class _InboxScreenState extends State<InboxScreen> {
+class _InboxScreenState extends State<InboxScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController searchController = TextEditingController();
   bool _selectionMode = false;
   final Set<int> _selectedConversationIds = {};
@@ -64,13 +69,15 @@ class _InboxScreenState extends State<InboxScreen> {
     Future.microtask(() async {
       final cp = Provider.of<ChatProvider>(context, listen: false);
       await cp.initUser();
-      await cp.getAllConversations();
-
+      if (cp.conversations.isEmpty) {
+        await cp.getAllConversations();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final up = context.watch<UserProvider>();
@@ -140,10 +147,6 @@ class _InboxScreenState extends State<InboxScreen> {
             Expanded(
               child: Consumer<ChatProvider>(
                 builder: (context, provider, child) {
-                  if (provider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
                   final chats = provider.conversations.where((chat) {
                     if (chat == null) return false;
                     final user = chat["user"];
@@ -152,6 +155,10 @@ class _InboxScreenState extends State<InboxScreen> {
                     final hasName = user["name"] != null || user["username"] != null;
                     return hasName;
                   }).toList();
+
+                  if (provider.isLoading && chats.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
                   if (chats.isEmpty) {
                     return Padding(
@@ -269,13 +276,10 @@ class _InboxScreenState extends State<InboxScreen> {
                             children: [
                               Stack(
                                 children: [
-                                  CircleAvatar(
+                                  ProfileAvatar(
+                                    imageUrl: profileImage,
                                     radius: width * 0.08,
-                                    backgroundImage: profileImage.isNotEmpty
-                                        ? NetworkImage(profileImage)
-                                        : null,
                                   ),
-                                  // ✅ Fixed: use `user` not `otherUser`
                                   if (user["is_online"] == true)
                                     Positioned(
                                       bottom: 0,

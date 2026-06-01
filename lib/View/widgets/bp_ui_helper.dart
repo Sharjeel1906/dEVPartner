@@ -1,5 +1,6 @@
 import 'package:dev_partner/View/screens/chat_screen.dart';
 import 'package:dev_partner/View/screens/user_profile.dart';
+import 'package:dev_partner/View/widgets/profile_avatar.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -69,22 +70,10 @@ Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> u
         /// 🔹 Top Row (Image + Info)
         Row(
           children: [
-            Stack(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(screenWidth * 0.008),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Colors.greenAccent, Colors.cyanAccent],
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: screenWidth * 0.07,
-                    backgroundImage: NetworkImage(profile.imageUrl),
-                  ),
-                ),
-              ],
+            ProfileAvatar(
+              imageUrl: resolvedImage.isNotEmpty ? resolvedImage : profile.imageUrl,
+              radius: screenWidth * 0.07,
+              showGradientRing: true,
             ),
 
             SizedBox(width: screenWidth * 0.03),

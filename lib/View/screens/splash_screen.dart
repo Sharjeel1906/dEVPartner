@@ -1,11 +1,21 @@
 import 'dart:math' as math;
+
+import 'package:dev_partner/View/widgets/profile_avatar.dart';
+import 'package:dev_partner/model_view/chat_provider.dart';
+import 'package:dev_partner/model_view/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../widgets/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;
-  const SplashScreen({super.key, required this.nextScreen});
+  final bool preloadContent;
+  const SplashScreen({
+    super.key,
+    required this.nextScreen,
+    this.preloadContent = false,
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -13,6 +23,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
+  Future<void>? _contentPreload;
+
   // Master timeline
   late AnimationController _masterController;
 
@@ -209,6 +221,46 @@ class _SplashScreenState extends State<SplashScreen>
     ]).animate(_glitchController);
   }
 
+  Future<void> _preloadBrowseAndInboxImages() async {
+    final up = context.read<UserProvider>();
+    final cp = context.read<ChatProvider>();
+    if (up.allUsers.isEmpty) {
+      await up.loadAllUsers();
+    }
+    if (cp.conversations.isEmpty) {
+      await cp.initUser();
+      await cp.getAllConversations();
+    }
+    final urls = <String>[];
+    for (final user in up.allUsers) {
+      if (user is Map) {
+        final profile = user["profile"];
+        if (profile is Map) {
+          urls.add(ProfileAvatar.urlFromPath(profile["pfp_path"]));
+        }
+      }
+    }
+    for (final conv in cp.conversations) {
+      if (conv is Map) {
+        final user = conv["user"];
+        if (user is Map) {
+          final img = user["profile_image"]?.toString() ?? '';
+          if (img.isNotEmpty) urls.add(img);
+        }
+      }
+    }
+    if (!mounted) return;
+    await ProfileAvatar.preloadImages(context, urls);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.preloadContent && _contentPreload == null) {
+      _contentPreload = _preloadBrowseAndInboxImages();
+    }
+  }
+
   void _startSequence() {
     _masterController.forward();
 
@@ -218,7 +270,11 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     // Navigate after splash
-    Future.delayed(const Duration(milliseconds: 3200), () {
+    Future.delayed(const Duration(milliseconds: 3200), () async {
+      if (!mounted) return;
+      if (_contentPreload != null) {
+        await _contentPreload;
+      }
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -428,7 +484,7 @@ class _SplashScreenState extends State<SplashScreen>
               builder: (_, __) => Opacity(
                 opacity: _cornerFade.value * 0.5,
                 child: Text(
-                  'BUILD 2025.1',
+                  'BUILD 2026.3',
                   style: GoogleFonts.spaceMono(
                     color: C.textMuted.withOpacity(0.5),
                     fontSize: 8,
@@ -677,7 +733,7 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         SizedBox(width: w * 0.025),
         _StatusPill(
-          label: 'v2.4.1',
+          label: 'v1.3.1',
           color: C.cyan,
           showDot: false,
         ),

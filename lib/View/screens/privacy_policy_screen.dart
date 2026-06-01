@@ -36,31 +36,58 @@ class PrivacyPolicyScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionCard(
-                title: "PRIVACY COMMITMENT",
-                icon: Icons.shield_outlined,
-                content:
-                    "At dEV Partner, user privacy is paramount. We gather only the minimal personal data required to enable team match-making and direct messaging between developers and student peers. We do not engage in background behavioral profiling or third-party marketing tracking.",
+              Text(
+                "Last updated: May 2026",
+                style: GoogleFonts.dmSans(color: C.textMuted, fontSize: 12),
               ),
+              const SizedBox(height: 16),
               _buildSectionCard(
-                title: "MINIMAL DATA COLLECTION",
+                title: "DATA COLLECTION",
                 icon: Icons.data_usage_rounded,
                 content:
-                    "• Profile Information: We collect and store academic-oriented details (your name, academic program, current semester, technical domain, skills, and optional profile picture) to build your profile card.\n"
-                    "• Messaging Data: Chat messages and timestamps are processed to enable real-time messaging using websockets.\n"
-                    "• Auth Credentials: Standard cached access tokens are securely held locally to keep you logged in between sessions.",
+                    "dEVPartner collects information you voluntarily provide during registration and profile setup, including your name, email, academic program, skills, domain, and optional portfolio links. We also process authentication tokens, team membership records, and chat metadata necessary to operate the platform.",
               ),
               _buildSectionCard(
-                title: "SHARING & PEER VISIBILITY",
-                icon: Icons.share_outlined,
+                title: "PROFILE INFORMATION",
+                icon: Icons.badge_outlined,
                 content:
-                    "By default, your display name, domain, skills, and semester are visible to other logged-in users of dEV Partner so they can find you for team building. We do not sell, distribute, or expose your private contact data, invitation emails, or chat history to third-party ad networks or external marketing services.",
+                    "Profile fields such as semester, class, section, role, experience level, and profile picture are stored to help other users discover compatible teammates. By default, this information is visible to authenticated users within the app. You may update or correct your profile at any time from My Profile.",
               ),
               _buildSectionCard(
-                title: "DATA RETENTION & CONTROL",
-                icon: Icons.settings_backup_restore_rounded,
+                title: "USER CONTENT",
+                icon: Icons.article_outlined,
                 content:
-                    "You retain full control over your data. You can modify your profile fields, change technical skills, or update your team requirements directly in the app. If you wish to delete your account or wipe your conversation history, please contact support for immediate processing.",
+                    "Content you submit—including team descriptions, skills lists, about sections, and uploaded CV or image files—is stored on our servers to deliver app functionality. You retain ownership of your content but grant dEVPartner a limited license to display it within the service for collaboration purposes.",
+              ),
+              _buildSectionCard(
+                title: "MESSAGING DATA",
+                icon: Icons.message_outlined,
+                content:
+                    "Chat messages, timestamps, and delivery status are processed to enable real-time communication between users. Messages are transmitted over encrypted connections where supported. We do not sell message content to advertisers or unrelated third parties.",
+              ),
+              _buildSectionCard(
+                title: "SECURITY PRACTICES",
+                icon: Icons.shield_outlined,
+                content:
+                    "We use industry-standard measures including access tokens, refresh token rotation, secure API communication, and restricted server access. While no system is perfectly secure, we continuously work to protect user data against unauthorized access, alteration, or disclosure.",
+              ),
+              _buildSectionCard(
+                title: "THIRD-PARTY SERVICES",
+                icon: Icons.hub_outlined,
+                content:
+                    "dEVPartner may rely on hosting providers, email delivery services, and analytics tools that process data on our behalf under contractual obligations. These providers may only use data as instructed by dEVPartner and must maintain appropriate safeguards.",
+              ),
+              _buildSectionCard(
+                title: "USER RIGHTS",
+                icon: Icons.gavel_outlined,
+                content:
+                    "You may request access to your personal data, correction of inaccurate information, export of your profile details, or restriction of certain processing activities. Contact support@devpartner.org to exercise these rights. We will respond within a reasonable timeframe.",
+              ),
+              _buildSectionCard(
+                title: "ACCOUNT DELETION",
+                icon: Icons.delete_forever_outlined,
+                content:
+                    "You may request permanent deletion of your account and associated personal data by contacting support. Upon verified deletion, we remove profile information, team associations where applicable, and message history subject to legal retention requirements.",
               ),
               const SizedBox(height: 24),
             ],
@@ -90,12 +117,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
             children: [
               Icon(icon, color: C.green, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.spaceMono(
-                  color: C.cyan,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.spaceMono(
+                    color: C.cyan,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

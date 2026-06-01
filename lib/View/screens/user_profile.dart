@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
+import '../widgets/profile_avatar.dart';
 import '../widgets/up_ui_helper.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -134,38 +135,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     sectionSubHeading(context: context, text: "Vibe, Intro⚡"),
                     SizedBox(height: height * 0.02),
                     Center(
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: C.surface,
-                          borderRadius: BorderRadius.circular(45),
-                          border: Border.all(color: C.border),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(45),
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  width: 90,
-                                  height: 90,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Center(
-                                    child: Icon(
-                                      Icons.person,
-                                      color: C.green,
-                                      size: 40,
-                                    ),
-                                  ),
-                                )
-                              : Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    color: C.green,
-                                    size: 40,
-                                  ),
-                                ),
-                        ),
+                      child: ProfileAvatar(
+                        imageUrl: imageUrl,
+                        radius: 45,
+                        showGradientRing: true,
                       ),
                     ),
                     SizedBox(height: height * 0.02),

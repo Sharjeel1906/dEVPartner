@@ -2,19 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/theme.dart';
 
+Widget requiredFieldLabel(String label) {
+  return RichText(
+    text: TextSpan(
+      style: TextStyle(color: C.textLabel, fontSize: 13),
+      children: [
+        TextSpan(text: label),
+        const TextSpan(
+          text: ' *',
+          style: TextStyle(color: Colors.red),
+        ),
+      ],
+    ),
+  );
+}
+
 Widget customTextField({
   required TextEditingController controller,
   required String hintText,
   required String labelText,
   required Focusnode,
   bool isPassword = false,
+  bool isRequired = false,
 }) {
   final obscurePassword = ValueNotifier<bool>(isPassword);
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
+      isRequired ? requiredFieldLabel(labelText) : Text(
         labelText,
         style: TextStyle(
           color: C.textLabel,
@@ -163,6 +179,8 @@ Widget buildLabeledDropdownRow({
   required Function(String) onChanged2,
 
   required double spacing,
+  bool required1 = false,
+  bool required2 = false,
 }) {
   return Row(
     children: [
@@ -170,7 +188,9 @@ Widget buildLabeledDropdownRow({
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label1, style: TextStyle(color: C.textLabel)),
+            required1
+                ? requiredFieldLabel(label1)
+                : Text(label1, style: TextStyle(color: C.textLabel)),
             const SizedBox(height: 6),
             buildDropdown(
               value: value1,
@@ -185,7 +205,9 @@ Widget buildLabeledDropdownRow({
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label2, style: TextStyle(color: C.textLabel)),
+            required2
+                ? requiredFieldLabel(label2)
+                : Text(label2, style: TextStyle(color: C.textLabel)),
             const SizedBox(height: 6),
             buildDropdown(
               value: value2,

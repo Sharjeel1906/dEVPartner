@@ -241,7 +241,8 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadAllUsers() async {
+  Future<void> loadAllUsers({bool force = false}) async {
+    if (!force && allUsers.isNotEmpty) return;
     try {
       isLoading = true;
       notifyListeners();
@@ -348,7 +349,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> refreshBrowseData() async {
     await loadCurrentUser();
-    await loadAllUsers();
+    await loadAllUsers(force: true);
   }
 
   void resetForm() {

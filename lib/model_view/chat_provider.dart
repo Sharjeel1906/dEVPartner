@@ -162,7 +162,8 @@ class ChatProvider extends ChangeNotifier {
     return count;
   }
 
-  Future<void> getAllConversations() async {
+  Future<void> getAllConversations({bool force = false}) async {
+    if (!force && conversations.isNotEmpty) return;
     try {
       isLoading = true;
       notifyListeners();

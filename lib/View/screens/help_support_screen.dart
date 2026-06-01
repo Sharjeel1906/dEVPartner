@@ -8,7 +8,6 @@ class HelpSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: C.bg,
@@ -38,46 +37,68 @@ class HelpSupportScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionCard(
-                title: "ABOUT THE PLATFORM",
-                icon: Icons.info_outline_rounded,
+                title: "ACCOUNT MANAGEMENT",
+                icon: Icons.manage_accounts_outlined,
                 content:
-                    "dEV Partner is a professional collaboration network designed to connect developers, designers, and students to coordinate, form balanced project teams, and manage Final Year Projects (FYP). We streamline the discovery process to help you find the right technical fit for your projects.",
+                    "Create your account with a valid university email. Use the drawer menu to access My Profile, update your credentials, and manage your session. If you experience login issues, log out and sign in again. Persistent login keeps you signed in securely between app launches using encrypted tokens stored on your device.",
               ),
               _buildSectionCard(
-                title: "CORE FUNCTIONALITY",
-                icon: Icons.grid_view_rounded,
+                title: "PROFILE SETUP",
+                icon: Icons.person_outline_rounded,
                 content:
-                    "• Discover Partner: Search and filter profiles by skills, academic program, semester, and domain.\n"
-                    "• Discover Teams: Find recruiting project teams and check open roles, available spots, and descriptions.\n"
-                    "• Real-Time Chat: Initiate conversations directly with potential teammates or leaders to align goals.\n"
-                    "• Team Management: Create teams, add or remove members, assign roles, and handle incoming requests easily.",
+                    "Complete every required field marked with a red asterisk (*) including gender, role, about, academic details, domain, and experience level. Add skills and a profile photo to improve discoverability. Your profile card appears in Discover Partner where teammates search by class, program, semester, and domain.",
               ),
               _buildSectionCard(
-                title: "USER RESPONSIBILITIES",
-                icon: Icons.gavel_rounded,
+                title: "TEAM BUILDING",
+                icon: Icons.groups_outlined,
                 content:
-                    "All users must maintain high standards of academic integrity and professional courtesy. Communication must be respectful and strictly related to project coordination. Spam, harassment, or submitting falsified profile details will lead to immediate account suspension.",
+                    "Browse open teams in Discover Teams, review roles and available spots, and send join requests to team leaders. Leaders can create teams, add members from profiles, and manage roster size. Use My Team to view your active mission, crew members, and submit exit requests when needed.",
               ),
               _buildSectionCard(
-                title: "GETTING HELP",
+                title: "MESSAGING",
+                icon: Icons.chat_bubble_outline_rounded,
+                content:
+                    "Start conversations from user profiles or your Messages inbox. Real-time chat uses secure WebSocket connections. Long-press messages or conversations to select and delete items when needed. Keep communication professional and focused on project coordination.",
+              ),
+              _buildSectionCard(
+                title: "REPORTING USERS",
+                icon: Icons.flag_outlined,
+                content:
+                    "If you encounter harassment, spam, falsified profiles, or inappropriate conduct, contact support immediately with the username, date, and a brief description of the incident. Our team reviews reports promptly and may suspend accounts that violate community standards.",
+              ),
+              _buildSectionCard(
+                title: "COMMUNITY GUIDELINES",
+                icon: Icons.verified_user_outlined,
+                content:
+                    "dEVPartner is built for respectful academic collaboration. Be honest in your profile, honor team commitments, protect intellectual property, and follow your institution's academic integrity policies. Discrimination, bullying, and off-platform scams are strictly prohibited.",
+              ),
+              _buildSectionCard(
+                title: "FAQs",
+                icon: Icons.quiz_outlined,
+                content:
+                    "Q: Why can't I see profiles?\nA: Ensure you are logged in and have network connectivity.\n\n"
+                    "Q: How do I join a team?\nA: Open Discover Teams, select a team, and send a request to the leader.\n\n"
+                    "Q: Can I be in multiple teams?\nA: Team rules vary; coordinate with leaders before accepting multiple invitations.\n\n"
+                    "Q: How do unread messages work?\nA: Unread counts appear on your inbox; open a chat to view new messages.",
+              ),
+              _buildSectionCard(
+                title: "CONTACT SUPPORT",
                 icon: Icons.contact_support_outlined,
                 content:
-                    "Need assistance, want to report an issue, or suggest features? Reach out to our dedicated support team. We generally respond to student queries and bug reports within 24–48 hours.",
+                    "Our support team assists with account access, technical bugs, team disputes, and policy questions. We typically respond within 24–48 hours on business days. Include your registered email and a clear summary when reaching out.",
               ),
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [C.green, C.cyan],
-                  ),
+                  gradient: const LinearGradient(colors: [C.green, C.cyan]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
                     Text(
-                      "Contact Support",
+                      "Email Support",
                       style: GoogleFonts.spaceMono(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
@@ -124,12 +145,14 @@ class HelpSupportScreen extends StatelessWidget {
             children: [
               Icon(icon, color: C.green, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.spaceMono(
-                  color: C.cyan,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.spaceMono(
+                    color: C.cyan,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

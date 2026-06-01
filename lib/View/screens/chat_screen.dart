@@ -1,4 +1,5 @@
 import 'package:dev_partner/View/widgets/cp_ui_helper.dart';
+import 'package:dev_partner/View/widgets/profile_avatar.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -150,7 +151,6 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
 
     final provider = context.watch<ChatProvider>();
     final messages = provider.messages;
-    final hasImage = (widget.imageUrl).toString().isNotEmpty;
     return Scaffold(
       backgroundColor: C.bg,
       appBar: AppBar(
@@ -174,19 +174,10 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [C.green, C.cyan]),
-              ),
-              child: CircleAvatar(
-                radius: width * 0.055,
-                backgroundColor: C.surface,
-                backgroundImage: hasImage
-                    ? NetworkImage(widget.imageUrl)
-                    : null,
-              ),
+            ProfileAvatar(
+              imageUrl: widget.imageUrl,
+              radius: width * 0.055,
+              showGradientRing: true,
             ),
 
             SizedBox(width: width * 0.03),
@@ -354,68 +345,87 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
             ),
           ),
 
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: width * 0.035,
-              vertical: height * 0.012,
-            ),
-            decoration: BoxDecoration(
-              color: C.surface.withOpacity(0.08),
-              border: Border(top: BorderSide(color: Colors.white12)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: width * 0.04),
+          SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                width * 0.04,
+                height * 0.014,
+                width * 0.04,
+                height * 0.018,
+              ),
+              decoration: BoxDecoration(
+                color: C.surface.withOpacity(0.12),
+                border: Border(top: BorderSide(color: Colors.white12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: width * 0.04,
+                        vertical: height * 0.008,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(width * 0.06),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: TextField(
+                        controller: msgController,
+                        focusNode: _msgFocusNode,
+                        minLines: 1,
+                        maxLines: 4,
+                        style: const TextStyle(color: Colors.white),
+                        cursorColor: C.green,
+                        decoration: InputDecoration(
+                          hintText: "Type a message...",
+                          hintStyle: TextStyle(color: C.textLabel),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: height * 0.012,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: width * 0.025),
+                  Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
-                      borderRadius: BorderRadius.circular(width * 0.06),
-                      border: Border.all(color: Colors.white12),
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(colors: [C.green, C.cyan]),
+                      boxShadow: [
+                        BoxShadow(
+                          color: C.green.withOpacity(0.5),
+                          blurRadius: 12,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                    child: TextField(
-                      controller: msgController,
-                      focusNode: _msgFocusNode,
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: C.green,
-                      decoration: InputDecoration(
-                        hintText: "Type a message...",
-                        hintStyle: TextStyle(color: C.textLabel),
-                        border: InputBorder.none,
+                    child: IconButton(
+                      onPressed: () {
+                        final text = msgController.text.trim();
+                        if (text.isEmpty) return;
+                        provider.sendMessage(text);
+                        msgController.clear();
+                      },
+                      icon: Icon(
+                        Icons.send_rounded,
+                        color: C.bg,
+                        size: width * 0.055,
                       ),
                     ),
                   ),
-                ),
-
-                SizedBox(width: width * 0.025),
-
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [C.green, C.cyan]),
-                    boxShadow: [
-                      BoxShadow(
-                        color: C.green.withOpacity(0.5),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    onPressed: () {
-                      final text = msgController.text.trim();
-                      if (text.isEmpty) return;
-                      provider.sendMessage(text);
-                      msgController.clear();
-                    },
-                    icon: Icon(
-                      Icons.send_rounded,
-                      color: C.bg,
-                      size: width * 0.055,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

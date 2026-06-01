@@ -37,28 +37,46 @@ class DisclaimerScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionCard(
-                title: "PLATFORM PURPOSE",
-                icon: Icons.business_center_outlined,
+                title: "USER RESPONSIBILITY",
+                icon: Icons.person_outline_rounded,
                 content:
-                    "dEV Partner serves strictly as a facilitator to connect project creators, developers, designers, and students for Final Year Projects (FYP) and collaborative ventures. The app provides tools to display profiles, share team opportunities, and chat, but does not actively intermediate relationships.",
+                    "You are solely responsible for the accuracy of information in your profile, the teams you join or create, and all decisions made based on interactions within dEVPartner. Verify credentials, skills, and availability of potential partners before committing to a project.",
               ),
               _buildSectionCard(
-                title: "NO SUITABILITY GUARANTEE",
-                icon: Icons.verified_user_outlined,
-                content:
-                    "While we encourage accurate profile details, dEV Partner does not guarantee the credentials, academic standings, work ethic, or performance of any matched users or teams. Users are solely responsible for vetting prospective partners, verifying details, and establishing collaboration rules.",
-              ),
-              _buildSectionCard(
-                title: "LIMITATION OF LIABILITY",
+                title: "COLLABORATION RISKS",
                 icon: Icons.warning_amber_rounded,
                 content:
-                    "Under no circumstances shall dEV Partner, its developers, or contributors be held liable for project failures, intellectual property disputes, academic penalties, loss of project data, or personal disagreements that arise from contacts made through the application.",
+                    "Team formation through dEVPartner involves interpersonal and academic risks including misaligned expectations, uneven contribution, and scheduling conflicts. The platform facilitates introductions but does not supervise day-to-day collaboration or enforce team agreements.",
               ),
               _buildSectionCard(
-                title: "USAGE CONDITIONS",
-                icon: Icons.rule_rounded,
+                title: "PROJECT OUTCOMES",
+                icon: Icons.assignment_outlined,
                 content:
-                    "By utilizing dEV Partner, you acknowledge that all communications, repository sharing, and team arrangements are performed at your own risk. It is expected that all work comply with your specific institution's academic honesty regulations.",
+                    "dEVPartner does not guarantee project completion, grades, publication acceptance, startup success, or any specific academic or professional outcome. Success depends on team effort, institutional requirements, and external factors beyond our control.",
+              ),
+              _buildSectionCard(
+                title: "THIRD-PARTY CONTENT",
+                icon: Icons.link_outlined,
+                content:
+                    "Profiles may contain links to external websites, repositories, or portfolios. dEVPartner is not responsible for the content, security, or practices of third-party sites. Access external links at your own discretion.",
+              ),
+              _buildSectionCard(
+                title: "COMMUNICATION CONDUCT",
+                icon: Icons.forum_outlined,
+                content:
+                    "Users must communicate respectfully and professionally. dEVPartner is not liable for offensive, misleading, or harmful statements made in private messages or public profile content. Report violations to support for review.",
+              ),
+              _buildSectionCard(
+                title: "PLATFORM LIMITATIONS",
+                icon: Icons.settings_outlined,
+                content:
+                    "The service is provided on an \"as is\" and \"as available\" basis. Features may change, be suspended, or experience downtime for maintenance. We do not warrant uninterrupted access, error-free operation, or compatibility with all devices.",
+              ),
+              _buildSectionCard(
+                title: "LIABILITY LIMITATION",
+                icon: Icons.balance_outlined,
+                content:
+                    "To the fullest extent permitted by law, dEVPartner, its developers, affiliates, and contributors shall not be liable for indirect, incidental, special, or consequential damages arising from use of the app, including data loss, academic penalties, IP disputes, or financial loss from collaborations initiated through the platform.",
               ),
               const SizedBox(height: 24),
             ],
@@ -88,12 +106,14 @@ class DisclaimerScreen extends StatelessWidget {
             children: [
               Icon(icon, color: C.green, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.spaceMono(
-                  color: C.cyan,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.spaceMono(
+                    color: C.cyan,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
