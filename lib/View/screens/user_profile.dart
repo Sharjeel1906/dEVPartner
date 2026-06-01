@@ -9,6 +9,7 @@ import '../widgets/theme.dart';
 import '../widgets/cp_ui_helper.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/up_ui_helper.dart';
+import '../../model/cv_download_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   UserProfileScreen({super.key});
@@ -18,6 +19,8 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  bool _cvDownloading = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,8 +65,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ? skills.map((s) => s["name"]?.toString() ?? "").where((s) => s.isNotEmpty).toList()
         : <String>[];
 
-    final pfp = profile["pfp_path"]?.toString() ?? "";
-    final imageUrl = pfp.isNotEmpty ? "fyp-partner-finder-app-backend-production.up.railway.app$pfp" : "";
+    final imageUrl = ProfileAvatar.urlFromPath(profile["pfp_path"]);
+    final cvPath = profile["cv_path"]?.toString() ?? "";
 
     return Scaffold(
       backgroundColor: C.bg,
@@ -261,6 +264,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     SizedBox(height: height * 0.03),
 
+                    _buildDownloadCvButton(
+                      context,
+                      up,
+                      user,
+                      height,
+                      cvPath,
+                    ),
+                    SizedBox(height: height * 0.02),
                     _buildMemberButton(context, up, tp, user, height),
                     SizedBox(height: height * 0.02),
                     _buildRemoveMemberButton(context, up, tp, user, height),
@@ -270,6 +281,74 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDownloadCvButton(
+    BuildContext context,
+    UserProvider up,
+    Map<String, dynamic> user,
+    double height,
+    String cvPath,
+  ) {
+    final viewedId = _userId(user);
+    if (viewedId == null ||
+        viewedId == up.currentUserId ||
+        cvPath.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final fileName = cvPath.split("/").last;
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: C.cyan,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        onPressed: _cvDownloading
+            ? null
+            : () async {
+                setState(() => _cvDownloading = true);
+                try {
+                  final savedPath = await CvDownloadService.downloadCv(
+                    cvPath: cvPath,
+                    fileName: fileName,
+                  );
+                  if (!context.mounted) return;
+                  customColoredBox(
+                    context,
+                    savedPath != null
+                        ? "CV saved to $savedPath"
+                        : "Could not download CV, or save was cancelled.",
+                  );
+                } finally {
+                  if (mounted) {
+                    setState(() => _cvDownloading = false);
+                  }
+                }
+              },
+        child: _cvDownloading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                "Download CV",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: height * 0.017,
+                ),
+              ),
       ),
     );
   }

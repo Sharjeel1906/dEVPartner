@@ -6,7 +6,7 @@ class ChatService {
   final ApiClient _client = ApiClient();
 
   // ================= GET ALL CONVERSATIONS =================
-  Future<List<dynamic>> getAllConversations() async {
+  Future<List<dynamic>?> getAllConversations() async {
     try {
       final request = http.Request(
         "GET",
@@ -20,9 +20,9 @@ class ChatService {
         return jsonDecode(body);
       }
 
-      return [];
+      return null;
     } catch (e) {
-      return [];
+      return null;
     }
   }
 
@@ -62,6 +62,20 @@ class ChatService {
         "DELETE",
         Uri.parse("${ApiClient.baseUrl}/message/$messageId/"),
       );
+      final response = await _client.sendRequest(request);
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> markMessagesRead(int otherUserId) async {
+    try {
+      final request = http.Request(
+        "POST",
+        Uri.parse("${ApiClient.baseUrl}/messages/$otherUserId/read/"),
+      );
+      request.headers["Content-Type"] = "application/json";
       final response = await _client.sendRequest(request);
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {

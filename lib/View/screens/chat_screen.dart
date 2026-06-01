@@ -116,26 +116,35 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
     cp.addListener(_onMessagesChanged);
     _msgFocusNode.addListener(_onFocusChanged);
 
+    msgController.addListener(_onTextChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await cp.initUser();
       cp.currentUserId = cp.currentUserId ?? widget.currentUserId;
-      cp.clearMessages();
+      cp.setActiveChatPartner(widget.userId);
       await cp.getConversationMessages(widget.userId);
-      await cp.markConversationAsRead(widget.userId); // ← add this line
+      await cp.markConversationAsRead(widget.userId);
       final senderId = cp.currentUserId ?? widget.currentUserId;
       await cp.connectSocket(widget.userId, senderId);
-      
-      // Initialize length and scroll to bottom
+
       _lastMessagesLength = cp.messages.length;
       _scrollToBottom();
     });
   }
 
+  void _onTextChanged() {
+    _chatProvider.onChatTextChanged(widget.userId);
+  }
+
   @override
   void dispose() {
     _chatProvider.removeListener(_onMessagesChanged);
+    msgController.removeListener(_onTextChanged);
+    _chatProvider.sendTypingStop(widget.userId);
     _chatProvider.disconnectSocket();
+    _chatProvider.setActiveChatPartner(null);
+    _chatProvider.refreshInbox();
     _msgFocusNode.removeListener(_onFocusChanged);
     _msgFocusNode.dispose();
     msgController.dispose();
@@ -193,12 +202,23 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                     fontSize: width * 0.042,
                   ),
                 ),
-                Text(
-                  widget.isOnline ? "Online" : "Offline",
-                  style: TextStyle(
-                    color: widget.isOnline ? C.green : C.textMuted,
-                    fontSize: width * 0.028,
-                  ),
+                Builder(
+                  builder: (context) {
+                    final cp = context.watch<ChatProvider>();
+                    final online = cp.isUserOnline(widget.userId);
+                    final subtitle = cp.isPartnerTyping
+                        ? "Typing..."
+                        : (online ? "Online" : "Offline");
+                    return Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: cp.isPartnerTyping
+                            ? C.cyan
+                            : (online ? C.green : C.textMuted),
+                        fontSize: width * 0.028,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -209,7 +229,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
       body: Column(
         children: [
           Expanded(
-            child: provider.isLoading
+            child: provider.isMessagesLoading && messages.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : messages.isEmpty
             // ✅ Empty state instead of bouncing user away
@@ -345,6 +365,24 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
             ),
           ),
 
+          if (provider.isPartnerTyping)
+            Padding(
+              padding: EdgeInsets.only(
+                left: width * 0.06,
+                bottom: height * 0.006,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Typing...",
+                  style: GoogleFonts.dmSans(
+                    color: C.cyan,
+                    fontSize: width * 0.032,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
           SafeArea(
             top: false,
             child: Container(
@@ -414,7 +452,7 @@ class _ChatScreenUIState extends State<ChatScreenUI> {
                       onPressed: () {
                         final text = msgController.text.trim();
                         if (text.isEmpty) return;
-                        provider.sendMessage(text);
+                        provider.sendMessage(text, receiverId: widget.userId);
                         msgController.clear();
                       },
                       icon: Icon(

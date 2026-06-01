@@ -70,7 +70,9 @@ class _InboxScreenState extends State<InboxScreen>
       final cp = Provider.of<ChatProvider>(context, listen: false);
       await cp.initUser();
       if (cp.conversations.isEmpty) {
-        await cp.getAllConversations();
+        await cp.getAllConversations(recomputeUnread: true);
+      } else {
+        await cp.refreshInbox(recomputeUnread: true);
       }
     });
   }
@@ -151,9 +153,7 @@ class _InboxScreenState extends State<InboxScreen>
                     if (chat == null) return false;
                     final user = chat["user"];
                     if (user == null) return false;
-                    // ✅ check username too
-                    final hasName = user["name"] != null || user["username"] != null;
-                    return hasName;
+                    return user["id"] != null;
                   }).toList();
 
                   if (provider.isLoading && chats.isEmpty) {
@@ -228,20 +228,18 @@ class _InboxScreenState extends State<InboxScreen>
                           ? chat["unread_count"] as int
                           : int.tryParse(chat["unread_count"]?.toString() ?? "") ?? 0;
 
-                      debugPrint("Chat ${chat["id"]} unread_count raw: ${chat["unread_count"]} → parsed: $unreadCount"); // 👈 add this
-
                       return GestureDetector(
                         onLongPress: () {
                           if (conversationId == null) return;
                           _enterSelection(conversationId);
                         },
-                        onTap: () {
+                        onTap: () async {
                           if (_selectionMode) {
                             if (conversationId == null) return;
                             _toggleSelection(conversationId);
                             return;
                           }
-                          Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ChatScreenUI(
@@ -249,10 +247,18 @@ class _InboxScreenState extends State<InboxScreen>
                                 name: name,
                                 imageUrl: profileImage,
                                 currentUserId: up.currentUserId ?? 0,
-                                isOnline: user["is_online"] == true,
+                                isOnline: () {
+                                  final pid = ChatProvider.parseUserId(
+                                    user["id"],
+                                  );
+                                  return pid != null &&
+                                      provider.isUserOnline(pid);
+                                }(),
                               ),
                             ),
                           );
+                          if (!context.mounted) return;
+                          await provider.refreshInbox(recomputeUnread: true);
                         },
                         child: Container(
                           margin: EdgeInsets.only(bottom: height * 0.015),
@@ -280,7 +286,13 @@ class _InboxScreenState extends State<InboxScreen>
                                     imageUrl: profileImage,
                                     radius: width * 0.08,
                                   ),
-                                  if (user["is_online"] == true)
+                                  if (() {
+                                    final pid = ChatProvider.parseUserId(
+                                      user["id"],
+                                    );
+                                    return pid != null &&
+                                        provider.isUserOnline(pid);
+                                  }())
                                     Positioned(
                                       bottom: 0,
                                       right: 0,

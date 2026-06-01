@@ -1,4 +1,5 @@
 import 'package:dev_partner/View/screens/chat_screen.dart';
+import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/View/screens/user_profile.dart';
 import 'package:dev_partner/View/widgets/profile_avatar.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
@@ -211,21 +212,25 @@ Widget profileCard(BuildContext context, Profile profile, Map<String, dynamic> u
                         color: Colors.greenAccent, size: screenWidth * 0.04),
                     SizedBox(width: screenWidth * 0.015),
                     GestureDetector(
-                      onTap: () {
-                        print("CLICKED USER ID: ${user["id"]}");
-                        print("CurrentUserId :$currentUserId");
+                      onTap: () async {
+                        final cp = context.read<ChatProvider>();
+                        final partnerId = ChatProvider.parseUserId(user["id"]);
                         context.read<UserProvider>().setViewedUser(user);
-                        Navigator.push(
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatScreenUI(
                               userId: user["id"],
                               name: resolvedName,
                               imageUrl: resolvedImage,
-                              currentUserId:currentUserId ,
+                              currentUserId: currentUserId,
+                              isOnline: (partnerId != null &&
+                                      cp.isUserOnline(partnerId)) ||
+                                  user["is_online"] == true,
                             ),
                           ),
                         );
+                        cp.refreshInbox();
                       },
                       child: Text(
                         "Message",

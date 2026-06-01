@@ -6,6 +6,8 @@ import 'package:dev_partner/model/auth_services.dart';
 import 'package:dev_partner/model_view/chat_provider.dart';
 import 'package:dev_partner/model_view/team_provider.dart';
 import 'package:dev_partner/model_view/user_provider.dart';
+import 'dart:async';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +25,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  Timer? _inboxRefreshTimer;
+  ChatProvider? _chatProvider;
 
   final List<Widget> screens = const [
     BrowseProfileScreen(),
@@ -52,13 +56,27 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       if (!mounted) return;
       final cp = context.read<ChatProvider>();
+      _chatProvider = cp;
       await cp.initUser();
-      if (cp.conversations.isEmpty) {
-        await cp.getAllConversations();
-      }
+      final firstLoad = cp.conversations.isEmpty;
+      await cp.getAllConversations(
+        force: firstLoad,
+        recomputeUnread: firstLoad,
+      );
+      if (!mounted) return;
+      _inboxRefreshTimer = Timer.periodic(
+        const Duration(seconds: 4),
+        (_) => cp.refreshInbox(),
+      );
       if (!mounted) return;
       context.read<TeamProvider>().getMyTeam();
     });
+  }
+
+  @override
+  void dispose() {
+    _inboxRefreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -77,6 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
+          if (index == 3) {
+            context.read<ChatProvider>().refreshInbox(recomputeUnread: true);
+          }
         },
       ),
     );
