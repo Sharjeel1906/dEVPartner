@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import '../widgets/theme.dart';
 
-/// Professional, responsive bottom navigation bar
+/// Professional, responsive bottom navigation bar fitting safe area
 Widget bottomNavigationBarUI({
   required BuildContext context,
   required int currentIndex,
   required Function(int) onTap,
 }) {
-  final width = MediaQuery.of(context).size.width;
-  final height = MediaQuery.of(context).size.height;
+  final bottomPadding = MediaQuery.of(context).padding.bottom;
 
   // Function to build individual nav item
   Widget navItem(IconData icon, String label, int index) {
@@ -18,37 +16,39 @@ Widget bottomNavigationBarUI({
       onTap: () => onTap(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(
-          horizontal: width * 0.03,
-          vertical: height * 0.008,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           gradient: isSelected
-              ? LinearGradient(
+              ? const LinearGradient(
             colors: [Colors.greenAccent, Colors.cyanAccent],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
               : null,
-          borderRadius: BorderRadius.circular(width * 0.05),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
               color: isSelected ? Colors.black : Colors.white54,
-              size: width * 0.06,
+              size: 22,
             ),
-            SizedBox(width: width * 0.015),
-            if (isSelected)
+            if (isSelected) ...[
+              const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black,
-                  fontSize: width * 0.035,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ],
           ],
         ),
       ),
@@ -56,16 +56,25 @@ Widget bottomNavigationBarUI({
   }
 
   return Container(
-    margin: EdgeInsets.all(width * 0.03),
-    padding: EdgeInsets.symmetric(vertical: height * 0.012),
+    padding: EdgeInsets.only(
+      left: 16,
+      right: 16,
+      top: 10,
+      bottom: bottomPadding > 0 ? bottomPadding + 6 : 10,
+    ),
     decoration: BoxDecoration(
-      color: C.surface, // match your theme
-      borderRadius: BorderRadius.circular(width * 0.08),
+      color: const Color(0xFF0C0E1F), // Matches C.bg solid dark blue tone
+      border: Border(
+        top: BorderSide(
+          color: Colors.white.withOpacity(0.08),
+          width: 0.8,
+        ),
+      ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black26,
-          blurRadius: width * 0.03,
-          offset: Offset(0, height * 0.005),
+          color: Colors.black.withOpacity(0.3),
+          blurRadius: 10,
+          offset: const Offset(0, -2),
         )
       ],
     ),
@@ -74,8 +83,8 @@ Widget bottomNavigationBarUI({
       children: [
         navItem(Icons.explore, "Discover", 0),
         navItem(Icons.people, "Teams", 1),
+        navItem(Icons.auto_awesome, "AI Match", 2),
         navItem(Icons.chat_bubble_outline, "Messages", 3),
-        navItem(Icons.settings, "Setting", 2),
       ],
     ),
   );

@@ -9,8 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/bottom_nav_bar.dart';
-import 'package:dev_partner/View/screens/register.dart';
 import 'package:dev_partner/View/screens/inbox_screen.dart';
+import 'package:dev_partner/View/screens/ai_match_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> screens = [
     BrowseProfileScreen(),
     BrowseTeamsScreen(),
-    RegisterScreen(),
+    AiMatchScreen(),
     InboxScreen(),
   ];
 
